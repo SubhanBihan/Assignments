@@ -23,8 +23,7 @@
 // on Launchpad via XDS110
 
 #define USB_UART_PORT GPIO_PORT_P1
-#define USB_UART_PINS \
-  (GPIO_PIN2 | GPIO_PIN3)  // The pins are given to you for guidance. Also,
+#define USB_UART_PINS (GPIO_PIN2 | GPIO_PIN3)  // The pins are given to you for guidance. Also,
                            // because many students miss the parentheses
 #define USB_UART_INSTANCE EUSCI_A0_BASE
 

@@ -69,16 +69,16 @@ int main(void) {
     PollNonBlockingLED();
     HAL_refresh(&hal);
     Application_loop(&app, &hal);
-    switch (disp.screen)
-    {
-        case MAIN:
-          MainScreen(&g_sContext, &hal, &disp);
-          break;
+  //   switch (disp.screen)
+  //   {
+  //       case MAIN:
+  //         MainScreen(&g_sContext, &hal, &disp);
+  //         break;
         
-        default:
-          break;
-    }
-  }
+  //       default:
+  //         break;
+  //   }
+  // }
 }
 
 /**
