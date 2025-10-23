@@ -30,6 +30,9 @@ void Initialize(Graphics_Context* g_sContext_p) {
 // This function updates the foreground color of the graphic context based on the "color" argument
 void change_pen_color(Graphics_Context* g_sContext_p, color_t color) {
     switch(color) {
+    case BLACK:
+        Graphics_setForegroundColor(g_sContext_p, GRAPHICS_COLOR_BLACK);
+        break;
     case RED:
         Graphics_setForegroundColor(g_sContext_p, GRAPHICS_COLOR_RED);
         break;
@@ -52,6 +55,8 @@ void change_pen_color(Graphics_Context* g_sContext_p, color_t color) {
 void MainScreen(Graphics_Context* g_sContext_p, HAL* hal_p, display_t* disp_p) {
     static unsigned char option_num = 0;
 
+    char j;
+
     if (disp_p->screen_changed) {
         // // wipe the screen by drawing over it with the black color as the the background
         // Graphics_setForegroundColor(g_sContext_p, GRAPHICS_COLOR_BLACK);
@@ -59,20 +64,23 @@ void MainScreen(Graphics_Context* g_sContext_p, HAL* hal_p, display_t* disp_p) {
         // Might need to change this to only covering the '>'- DONE (?)
         Graphics_clearDisplay(g_sContext_p);
 
+        char i = 0;
+
         // Game's name
-        Graphics_drawString(g_sContext_p, (int8_t *)"Pixel Monarch", -1, 10, 10, true);
+        Graphics_drawString(g_sContext_p, (int8_t *)"Pixel Monarch", -1, 10, MIN_LINE_SPACING * ++i, true);
 
         // Developer's name
-        Graphics_drawString(g_sContext_p, (int8_t *)"Samin Rahman", -1, 10, 20, true);
+        Graphics_drawString(g_sContext_p, (int8_t *)"Samin Rahman", -1, 5, MIN_LINE_SPACING * ++i, true);
+        j = i;
 
         // Options
-        Graphics_drawString(g_sContext_p, (int8_t *)"  Play Game", -1, 10, 30, true);
-        Graphics_drawString(g_sContext_p, (int8_t *)"  Instructions", -1, 10, 40, true);
-        Graphics_drawString(g_sContext_p, (int8_t *)"  High Scores", -1, 10, 50, true);
+        Graphics_drawString(g_sContext_p, (int8_t *)"  Play Game", -1, 5, MIN_LINE_SPACING * ++i, true);
+        Graphics_drawString(g_sContext_p, (int8_t *)"  Instructions", -1, 5, MIN_LINE_SPACING * ++i, true);
+        Graphics_drawString(g_sContext_p, (int8_t *)"  High Scores", -1, 5, MIN_LINE_SPACING * ++i, true);
 
         // Basic navigation
-        Graphics_drawString(g_sContext_p, (int8_t *)"BB1: Select Item", -1, 10, 60, true);
-        Graphics_drawString(g_sContext_p, (int8_t *)"BB2: Move Cursor Down", -1, 10, 70, true);
+        Graphics_drawString(g_sContext_p, (int8_t *)"BB1: Select Item", -1, 5, MIN_LINE_SPACING * ++i, true);
+        Graphics_drawString(g_sContext_p, (int8_t *)"BB2: Move Cursor Down", -1, 5, MIN_LINE_SPACING * ++i, true);
 
         disp_p->screen_changed = false;
         disp_p->redraw = true;
@@ -90,19 +98,19 @@ void MainScreen(Graphics_Context* g_sContext_p, HAL* hal_p, display_t* disp_p) {
         switch (option_num) {
             case 0:
             default:
-                Graphics_drawString(g_sContext_p, (int8_t *)">", -1, 10, 30, true);
-                Graphics_drawString(g_sContext_p, (int8_t *)" ", -1, 10, 40, true);
-                Graphics_drawString(g_sContext_p, (int8_t *)" ", -1, 10, 50, true);
+                Graphics_drawString(g_sContext_p, (int8_t *)">", -1, 5, MIN_LINE_SPACING * ++j, true);
+                Graphics_drawString(g_sContext_p, (int8_t *)" ", -1, 5, MIN_LINE_SPACING * ++j, true);
+                Graphics_drawString(g_sContext_p, (int8_t *)" ", -1, 5, MIN_LINE_SPACING * ++j, true);
                 break;
             case 1:
-                Graphics_drawString(g_sContext_p, (int8_t *)" ", -1, 10, 30, true);
-                Graphics_drawString(g_sContext_p, (int8_t *)">", -1, 10, 40, true);
-                Graphics_drawString(g_sContext_p, (int8_t *)" ", -1, 10, 50, true);
+                Graphics_drawString(g_sContext_p, (int8_t *)" ", -1, 5, MIN_LINE_SPACING * ++j, true);
+                Graphics_drawString(g_sContext_p, (int8_t *)">", -1, 5, MIN_LINE_SPACING * ++j, true);
+                Graphics_drawString(g_sContext_p, (int8_t *)" ", -1, 5, MIN_LINE_SPACING * ++j, true);
                 break;
             case 2:
-                Graphics_drawString(g_sContext_p, (int8_t *)" ", -1, 10, 30, true);
-                Graphics_drawString(g_sContext_p, (int8_t *)" ", -1, 10, 40, true);
-                Graphics_drawString(g_sContext_p, (int8_t *)">", -1, 10, 50, true);
+                Graphics_drawString(g_sContext_p, (int8_t *)" ", -1, 5, MIN_LINE_SPACING * ++j, true);
+                Graphics_drawString(g_sContext_p, (int8_t *)" ", -1, 5, MIN_LINE_SPACING * ++j, true);
+                Graphics_drawString(g_sContext_p, (int8_t *)">", -1, 5, MIN_LINE_SPACING * ++j, true);
                 break;
         }
 
@@ -133,20 +141,22 @@ void InstructionsScreen(Graphics_Context* g_sContext_p, HAL* hal_p, display_t* d
     if (disp_p->screen_changed) {
         Graphics_clearDisplay(g_sContext_p);
 
+        char i = 0;
+
         // Constant fluff-text
-        Graphics_drawString(g_sContext_p, (int8_t *)"Game Instructions", -1, 10, 10, true);
+        Graphics_drawString(g_sContext_p, (int8_t *)"Game Instructions", -1, 10, MIN_LINE_SPACING * ++i, true);
 
-        Graphics_drawString(g_sContext_p, (int8_t *)"Balance People (PE),", -1, 5, 20, true);
-        Graphics_drawString(g_sContext_p, (int8_t *)"Treasury (TR), and", -1, 5, 30, true);
-        Graphics_drawString(g_sContext_p, (int8_t *)"territory (boxes).", -1, 5, 40, true);
+        Graphics_drawString(g_sContext_p, (int8_t *)"Balance People (PE),", -1, 5, MIN_LINE_SPACING * ++i, true);
+        Graphics_drawString(g_sContext_p, (int8_t *)"Treasury (TR), and", -1, 5, MIN_LINE_SPACING * ++i, true);
+        Graphics_drawString(g_sContext_p, (int8_t *)"territory (boxes).", -1, 5, MIN_LINE_SPACING * ++i, true);
 
-        Graphics_drawString(g_sContext_p, (int8_t *)"When a crisis hits,", -1, 5, 50, true);
-        Graphics_drawString(g_sContext_p, (int8_t *)"type a command:", -1, 5, 60, true);
-        Graphics_drawString(g_sContext_p, (int8_t *)"SP: Spend (uses TR)", -1, 5, 70, true);
-        Graphics_drawString(g_sContext_p, (int8_t *)"AP: Appeal (uses PE)", -1, 5, 80, true);
-        Graphics_drawString(g_sContext_p, (int8_t *)"IG: Ignore", -1, 5, 90, true);
+        Graphics_drawString(g_sContext_p, (int8_t *)"When a crisis hits,", -1, 5, MIN_LINE_SPACING * ++i, true);
+        Graphics_drawString(g_sContext_p, (int8_t *)"type a command:", -1, 5, MIN_LINE_SPACING * ++i, true);
+        Graphics_drawString(g_sContext_p, (int8_t *)"SP: Spend (uses TR)", -1, 5, MIN_LINE_SPACING * ++i, true);
+        Graphics_drawString(g_sContext_p, (int8_t *)"AP: Appeal (uses PE)", -1, 5, MIN_LINE_SPACING * ++i, true);
+        Graphics_drawString(g_sContext_p, (int8_t *)"IG: Ignore", -1, 5, MIN_LINE_SPACING * ++i, true);
 
-        Graphics_drawString(g_sContext_p, (int8_t *)"BB2: Go Back", -1, 5, 100, true);
+        Graphics_drawString(g_sContext_p, (int8_t *)"BB2: Go Back", -1, 5, MIN_LINE_SPACING * ++i, true);
 
         disp_p->screen_changed = false;
     }
@@ -161,6 +171,7 @@ void HSScreen(Graphics_Context* g_sContext_p, HAL* hal_p, display_t* disp_p, uns
     static unsigned int highscores[NUM_SCORES] = {0};
 
     if (disp_p->screen_changed) {
+        Graphics_clearDisplay(g_sContext_p);
 
         // Update the scores
         char i, j;
@@ -198,5 +209,23 @@ void HSScreen(Graphics_Context* g_sContext_p, HAL* hal_p, display_t* disp_p, uns
 }
 
 void GameScreen(Graphics_Context* g_sContext_p, HAL* hal_p, display_t* disp_p, game_state_t *game_state) {
+    if (disp_p->screen_changed) {
+        Graphics_clearDisplay(g_sContext_p);
 
+        game_state->PE = 50;
+        game_state->TR = 100;
+
+    }
+}
+
+void draw_territory_square(Graphics_Context* g_sContext_p, display_t* disp_p, game_state_t *game_state, unsigned char square_index) {
+    if (square_index != SQR(game_state->grid_length) / 2) {    // Ignore if middle square
+        if (!disp_p->screen_changed) { 
+            change_pen_color(g_sContext_p, BLACK);
+            Graphics_fillRectangle(g_sContext_p, &R);
+        }
+
+        change_pen_color(g_sContext_p, game_state->squares[square_index].color);
+        Graphics_fillRectangle(g_sContext_p, &R);
+    }
 }
