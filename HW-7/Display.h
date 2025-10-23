@@ -16,6 +16,13 @@ typedef enum {RED, ORANGE, YELLOW, BLUE, GREEN} color_t;
 typedef enum {MAIN, INSTRUCTIONS, HS, GAME, GAMEOVER} screen_t;
 
 typedef struct {
+    unsigned PE;
+    unsigned TR;
+    unsigned year;
+
+} game_state_t;
+
+typedef struct {
     bool redraw;
     color_t pen_color;
     // shape_t shape;
@@ -30,3 +37,5 @@ void Initialize(Graphics_Context *);
 void MainScreen(Graphics_Context* g_sContext_p, HAL* hal_p, display_t* disp_p);
 void InstructionsScreen(Graphics_Context* g_sContext_p, HAL* hal_p, display_t* disp_p);
 void HSScreen(Graphics_Context* g_sContext_p, HAL* hal_p, display_t* disp_p, unsigned current_score);
+
+void GameScreen(Graphics_Context* g_sContext_p, HAL* hal_p, display_t* disp_p, game_state_t *game_state);

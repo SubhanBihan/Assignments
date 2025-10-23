@@ -70,9 +70,11 @@ void UART_SetBaud_Enable(UART* uart_p, UART_Baudrate baudChoice) {
   // without requiring excessive amounts of if-statements.
   // TODO: fill these tables such that they work with the proper baudChoice. The
   // first column is given for 9600 BPS
-  uint32_t clockPrescalerMapping[NUM_BAUD_CHOICES] = {19, 9, 4, 3};
-  uint32_t firstModRegMapping[NUM_BAUD_CHOICES]    = {8, 12, 14, 4};
-  uint32_t secondModRegMapping[NUM_BAUD_CHOICES]   = {0x55, 0x22, 0x08, 0x02};
+  // N = 5000, 2500, 1250, 833.33333
+  // 312.5, 156.25, 78.125, 52.083
+  uint32_t clockPrescalerMapping[NUM_BAUD_CHOICES] = {312, 156, 78, 52};
+  uint32_t firstModRegMapping[NUM_BAUD_CHOICES]    = {8, 4, 2, 1};
+  uint32_t secondModRegMapping[NUM_BAUD_CHOICES]   = {0, 0, 0, 0x25};
 
   // TODO: Replace 0s with the correct statement. Use line 71 as your guide
   uart_p->config.clockPrescalar = clockPrescalerMapping[baudChoice];

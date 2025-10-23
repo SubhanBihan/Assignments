@@ -44,13 +44,6 @@ int main(void) {
   // Stop Watchdog Timer - THIS SHOULD ALWAYS BE THE FIRST LINE OF YOUR MAIN
   WDT_A_holdTimer();
 
-  // A structure that holds a large set of characteristics for graphics including foreground color, background color
-  Graphics_Context g_sContext;
-
-  display_t disp = {true, BLUE, MAIN, true};
-
-  Initialize(&g_sContext);
-
   // Initialize the system clock and background hardware timer, used to enable
   // software timers to time their measurements properly.
   InitSystemTiming();
@@ -61,6 +54,13 @@ int main(void) {
 
   // Do not remove this line. This is your non-blocking check.
   InitNonBlockingLED();
+
+  // // A structure that holds a large set of characteristics for graphics including foreground color, background color
+  // Graphics_Context g_sContext;
+
+  // display_t disp = {true, BLUE, MAIN, true};
+
+  // Initialize(&g_sContext);
 
   // Main super-loop! In a polling architecture, this function should call
   // your main FSM function over and over.
@@ -78,7 +78,7 @@ int main(void) {
   //       default:
   //         break;
   //   }
-  // }
+  }
 }
 
 /**

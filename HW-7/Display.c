@@ -136,14 +136,17 @@ void InstructionsScreen(Graphics_Context* g_sContext_p, HAL* hal_p, display_t* d
         // Constant fluff-text
         Graphics_drawString(g_sContext_p, (int8_t *)"Game Instructions", -1, 10, 10, true);
 
-        Graphics_drawString(g_sContext_p, (int8_t *)"Balance People (PE), Treasury (TR), and territory (boxes).", -1, 10, 20, true);
+        Graphics_drawString(g_sContext_p, (int8_t *)"Balance People (PE),", -1, 5, 20, true);
+        Graphics_drawString(g_sContext_p, (int8_t *)"Treasury (TR), and", -1, 5, 30, true);
+        Graphics_drawString(g_sContext_p, (int8_t *)"territory (boxes).", -1, 5, 40, true);
 
-        Graphics_drawString(g_sContext_p, (int8_t *)"When a crisis hits, type a command:", -1, 10, 50, true);
-        Graphics_drawString(g_sContext_p, (int8_t *)"SP: Spend (uses TR)", -1, 10, 70, true);
-        Graphics_drawString(g_sContext_p, (int8_t *)"AP: Appeal (uses PE)", -1, 10, 80, true);
-        Graphics_drawString(g_sContext_p, (int8_t *)"IG: Ignore", -1, 10, 90, true);
+        Graphics_drawString(g_sContext_p, (int8_t *)"When a crisis hits,", -1, 5, 50, true);
+        Graphics_drawString(g_sContext_p, (int8_t *)"type a command:", -1, 5, 60, true);
+        Graphics_drawString(g_sContext_p, (int8_t *)"SP: Spend (uses TR)", -1, 5, 70, true);
+        Graphics_drawString(g_sContext_p, (int8_t *)"AP: Appeal (uses PE)", -1, 5, 80, true);
+        Graphics_drawString(g_sContext_p, (int8_t *)"IG: Ignore", -1, 5, 90, true);
 
-        Graphics_drawString(g_sContext_p, (int8_t *)"BB2: Go Back", -1, 10, 100, true);
+        Graphics_drawString(g_sContext_p, (int8_t *)"BB2: Go Back", -1, 5, 100, true);
 
         disp_p->screen_changed = false;
     }
@@ -192,4 +195,8 @@ void HSScreen(Graphics_Context* g_sContext_p, HAL* hal_p, display_t* disp_p, uns
         disp_p->screen = MAIN;
         disp_p->screen_changed = true;
     }
+}
+
+void GameScreen(Graphics_Context* g_sContext_p, HAL* hal_p, display_t* disp_p, game_state_t *game_state) {
+
 }
