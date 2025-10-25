@@ -80,7 +80,7 @@ int main(void) {
 Application Application_construct() {
   Application app;
 
-  display_t disp = {true, true, MAIN, BLUE};
+  display_t disp = {true, true, MAIN, WHITE};
   
   game_state_t game_state;
   game_state.grid_length = 3;

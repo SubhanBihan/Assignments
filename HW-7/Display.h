@@ -28,7 +28,7 @@ typedef enum {BLACK, WHITE, RED, ORANGE, YELLOW, BLUE, GREEN} color_t;
 
 typedef enum {MAIN, INSTRUCTIONS, HS, GAME, GAMEOVER} screen_t;
 
-typedef enum {ONE = 1, TWO, THREE, NUM_OPTIONS} option_t;
+typedef enum {ONE, TWO, THREE, NUM_OPTIONS} option_t;
 
 typedef enum {FLOOD, FAMINE, RAID, CALM, NUM_EVENTS} event_t;
 

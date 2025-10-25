@@ -133,6 +133,8 @@ void MainScreen(Graphics_Context* g_sContext_p, HAL* hal_p, display_t* disp_p) {
     // char op1[50], op2[50], op3[50];
 
     if (disp_p->redraw == true) {
+        change_pen_color(g_sContext_p, BLUE);
+        
         switch (option_num) {
             case ONE:
             default:
