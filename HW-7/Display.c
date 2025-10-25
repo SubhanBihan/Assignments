@@ -100,7 +100,7 @@ void MainScreen(Graphics_Context* g_sContext_p, HAL* hal_p, display_t* disp_p) {
 
         // Might need to change this to only covering the '>'- DONE (?)
         Graphics_clearDisplay(g_sContext_p);
-        change_pen_color(g_sContext_p, BLUE);   // Text color
+        change_pen_color(g_sContext_p, WHITE);   // Text color
 
         uint8_t i = 0;
 
@@ -178,7 +178,7 @@ void MainScreen(Graphics_Context* g_sContext_p, HAL* hal_p, display_t* disp_p) {
 void InstructionsScreen(Graphics_Context* g_sContext_p, HAL* hal_p, display_t* disp_p) {
     if (disp_p->screen_changed) {
         Graphics_clearDisplay(g_sContext_p);
-        change_pen_color(g_sContext_p, BLUE);   // Text color
+        change_pen_color(g_sContext_p, WHITE);   // Text color
 
         char i = 0;
 
@@ -211,7 +211,7 @@ void HSScreen(Graphics_Context* g_sContext_p, HAL* hal_p, display_t* disp_p, uns
 
     if (disp_p->screen_changed) {
         Graphics_clearDisplay(g_sContext_p);
-        change_pen_color(g_sContext_p, BLUE);   // Text color
+        change_pen_color(g_sContext_p, WHITE);   // Text color
 
         // Update the scores
         char i, j;
@@ -250,6 +250,7 @@ void HSScreen(Graphics_Context* g_sContext_p, HAL* hal_p, display_t* disp_p, uns
 
 void GameScreen(Graphics_Context* g_sContext_p, HAL* hal_p, display_t* disp_p, game_state_t *game_state) {
     char PE_str[30], TR_str[30], year_str[30];
+    static unsigned seed = 0;
 
     if (disp_p->screen_changed) {
         Graphics_clearDisplay(g_sContext_p);
@@ -262,7 +263,7 @@ void GameScreen(Graphics_Context* g_sContext_p, HAL* hal_p, display_t* disp_p, g
         unsigned colors_size = sizeof(colors) / sizeof(color_t);
 
         // TODO: Use Timer for random seed!!!
-        srand(1234);
+        srand(seed++);
 
         // Set (row, col) for each square
         uint8_t i;
@@ -289,7 +290,7 @@ void GameScreen(Graphics_Context* g_sContext_p, HAL* hal_p, display_t* disp_p, g
     }
 
     if (game_state->stats_change) {
-        change_pen_color(g_sContext_p, BLUE);   // Text color
+        change_pen_color(g_sContext_p, WHITE);   // Text color
         
         // Stats text
         snprintf(PE_str, sizeof(PE_str), "PE: %5d", game_state->PE);
