@@ -11,7 +11,7 @@
 #endif
 
 #define NUM_SCORES 5
-#define MIN_LINE_SPACING 10
+#define MIN_LINE_SPACING 12
 #define MAX_GRID 5*5
 #define GRID_Y_START 24
 #define GRID_Y_END 124
@@ -72,7 +72,7 @@ typedef struct {
  */
 uint32_t CircularIncrement(uint32_t value, uint32_t maximum);
 
-void UART_printMessage(HAL* hal_p, const char *msg);
+void UART_printMessage(HAL* hal_p, const char* msg);
 
 uint8_t get_square_idx(uint8_t idx, uint8_t grid_length);
 
@@ -86,9 +86,6 @@ void MainScreen(Graphics_Context* g_sContext_p, HAL* hal_p, display_t* disp_p);
 void InstructionsScreen(Graphics_Context* g_sContext_p, HAL* hal_p, display_t* disp_p);
 void HSScreen(Graphics_Context* g_sContext_p, HAL* hal_p, display_t* disp_p, unsigned current_score);
 
-void GameScreen(Graphics_Context* g_sContext_p, HAL* hal_p, display_t* disp_p, game_state_t* game_state);
-
-
-
+void GameScreen(Graphics_Context* g_sContext_p, HAL* hal_p, display_t* disp_p, game_state_t* game_state_p);
 
 #endif

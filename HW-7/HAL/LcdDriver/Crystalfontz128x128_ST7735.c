@@ -202,7 +202,7 @@ void Crystalfontz128x128_SetOrientation(uint8_t orientation) {
 //! \return None.
 //
 //*****************************************************************************
-static void Crystalfontz128x128_PixelDraw(const Graphics_Display *pDisplay,
+static void Crystalfontz128x128_PixelDraw(const Graphics_Display* pDisplay,
                                           int16_t lX, int16_t lY,
                                           uint16_t ulValue) {
   Crystalfontz128x128_SetDrawFrame(lX, lY, lX, lY);
@@ -241,9 +241,9 @@ static void Crystalfontz128x128_PixelDraw(const Graphics_Display *pDisplay,
 //
 //*****************************************************************************
 static void Crystalfontz128x128_PixelDrawMultiple(
-    const Graphics_Display *pDisplay, int16_t lX, int16_t lY, int16_t lX0,
-    int16_t lCount, int16_t lBPP, const uint8_t *pucData,
-    const uint32_t *pucPalette) {
+    const Graphics_Display* pDisplay, int16_t lX, int16_t lY, int16_t lX0,
+    int16_t lCount, int16_t lBPP, const uint8_t* pucData,
+    const uint32_t* pucPalette) {
   uint16_t Data;
 
   //
@@ -384,7 +384,7 @@ static void Crystalfontz128x128_PixelDrawMultiple(
 //! \return None.
 //
 //*****************************************************************************
-static void Crystalfontz128x128_LineDrawH(const Graphics_Display *pDisplay,
+static void Crystalfontz128x128_LineDrawH(const Graphics_Display* pDisplay,
                                           int16_t lX1, int16_t lX2, int16_t lY,
                                           uint16_t ulValue) {
   Crystalfontz128x128_SetDrawFrame(lX1, lY, lX2, lY);
@@ -417,7 +417,7 @@ static void Crystalfontz128x128_LineDrawH(const Graphics_Display *pDisplay,
 //! \return None.
 //
 //*****************************************************************************
-static void Crystalfontz128x128_LineDrawV(const Graphics_Display *pDisplay,
+static void Crystalfontz128x128_LineDrawV(const Graphics_Display* pDisplay,
                                           int16_t lX, int16_t lY1, int16_t lY2,
                                           uint16_t ulValue) {
   Crystalfontz128x128_SetDrawFrame(lX, lY1, lX, lY2);
@@ -450,8 +450,8 @@ static void Crystalfontz128x128_LineDrawV(const Graphics_Display *pDisplay,
 //! \return None.
 //
 //*****************************************************************************
-static void Crystalfontz128x128_RectFill(const Graphics_Display *pDisplay,
-                                         const Graphics_Rectangle *pRect,
+static void Crystalfontz128x128_RectFill(const Graphics_Display* pDisplay,
+                                         const Graphics_Rectangle* pRect,
                                          uint16_t ulValue) {
   int16_t x0 = pRect->sXMin;
   int16_t x1 = pRect->sXMax;
@@ -490,7 +490,7 @@ static void Crystalfontz128x128_RectFill(const Graphics_Display *pDisplay,
 //
 //*****************************************************************************
 static uint32_t Crystalfontz128x128_ColorTranslate(
-    const Graphics_Display *pDisplay, uint32_t ulValue) {
+    const Graphics_Display* pDisplay, uint32_t ulValue) {
   //
   // Translate from a 24-bit RGB color to a 5-6-5 RGB color.
   //
@@ -513,7 +513,7 @@ static uint32_t Crystalfontz128x128_ColorTranslate(
 //! \return None.
 //
 //*****************************************************************************
-static void Crystalfontz128x128_Flush(const Graphics_Display *pDisplay) {
+static void Crystalfontz128x128_Flush(const Graphics_Display* pDisplay) {
   //
   // There is nothing to be done.
   //
@@ -532,7 +532,7 @@ static void Crystalfontz128x128_Flush(const Graphics_Display *pDisplay) {
 //! \return None.
 //
 //*****************************************************************************
-static void Crystalfontz128x128_ClearScreen(const Graphics_Display *pDisplay,
+static void Crystalfontz128x128_ClearScreen(const Graphics_Display* pDisplay,
                                             uint16_t ulValue) {
   Graphics_Rectangle rect = {0, 0, LCD_VERTICAL_MAX - 1, LCD_VERTICAL_MAX - 1};
   Crystalfontz128x128_RectFill(pDisplay, &rect, ulValue);

@@ -144,6 +144,34 @@ void Application_loop(Graphics_Context* g_sContext_p, Application* app_p, HAL* h
     char rxChar = UART_getChar(&hal_p->uart);
     char txChar = Application_interpretIncomingChar(rxChar);
 
+    // Filtering logic for valid sequences: IG*, AP*, SP* (third char must be 1–8)
+    bool accept = false;
+
+    if (count == 0) {
+      // Only accept I, A, or S as first letter
+      if (txChar == 'I' || txChar == 'A' || txChar == 'S') {
+        accept = true;
+      }
+    } else if (count == 1) {
+      // Second character depends on first
+      if ((collected[0] == 'I' && txChar == 'G') ||
+          (collected[0] == 'A' && txChar == 'P') ||
+          (collected[0] == 'S' && txChar == 'P')) {
+        accept = true;
+      }
+    } else if (count == 2) {
+      // Third character must be a digit 1–8
+      if (txChar >= '1' && txChar <= '8') {
+        accept = true;
+      }
+    }
+
+    if (accept && count < 3 && UART_canSend(&hal_p->uart)) {
+      UART_sendChar(&hal_p->uart, txChar);
+      collected[count++] = txChar;
+    }
+    // Invalid chars are ignored and not echoed
+
     // Check for Enter key
     if (rxChar == '\r' || rxChar == '\n') {
       if (count > 0) {
@@ -182,40 +210,15 @@ void Application_loop(Graphics_Context* g_sContext_p, Application* app_p, HAL* h
 
         count = 0;  // Wipe buffer
       }
-      return;  // Don’t echo Enter
+      // return;  // Don’t echo Enter
     }
+    
 
-    // Filtering logic for valid sequences: IG*, AP*, SP* (third char must be 1–8)
-    bool accept = false;
-
-    if (count == 0) {
-      // Only accept I, A, or S as first letter
-      if (txChar == 'I' || txChar == 'A' || txChar == 'S') {
-        accept = true;
-      }
-    } else if (count == 1) {
-      // Second character depends on first
-      if ((collected[0] == 'I' && txChar == 'G') ||
-          (collected[0] == 'A' && txChar == 'P') ||
-          (collected[0] == 'S' && txChar == 'P')) {
-        accept = true;
-      }
-    } else if (count == 2) {
-      // Third character must be a digit 1–8
-      if (txChar >= '1' && txChar <= '8') {
-        accept = true;
-      }
+    if (app_p->game_state.cmd.action == INVALID || (app_p->game_state.event == CALM && (app_p->game_state.cmd.action == AP || app_p->game_state.cmd.action == SP) && app_p->game_state.cmd.sq_idx < 0)) {
+      UART_printMessage(hal_p, "\r\n\r\nInvalid Input. Try again!");
+      // app_p->game_state.new_cmd = true;
+      app_p->game_state.cmd.action = INVALID;
     }
-
-    if (accept && count < 3) {
-      collected[count++] = txChar;
-      if (UART_canSend(&hal_p->uart)) UART_sendChar(&hal_p->uart, txChar);
-    }
-    // Invalid chars are ignored and not echoed
-
-    if (app_p->game_state.cmd.action == INVALID || (app_p->game_state.event == CALM && app_p->game_state.cmd.action != IG && app_p->game_state.cmd.sq_idx < 0))
-      UART_printMessage(hal_p, "\n\nInvalid Input. Try again!\n\n");
-      app_p->game_state.new_cmd = true;
   }
 }
 
