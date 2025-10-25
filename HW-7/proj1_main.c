@@ -8,7 +8,7 @@
 #include <string.h>
 
 /* HAL and Application includes */
-// #include <Application.h>
+#include <Application.h>
 // #include <HAL/HAL.h>
 #include <HAL/Timer.h>
 #include <Display.h>
@@ -55,12 +55,10 @@ int main(void) {
   // Do not remove this line. This is your non-blocking check.
   InitNonBlockingLED();
 
-  // // A structure that holds a large set of characteristics for graphics including foreground color, background color
-  // Graphics_Context g_sContext;
+  // A structure that holds a large set of characteristics for graphics including foreground color, background color
+  Graphics_Context g_sContext;
 
-  // display_t disp = {true, BLUE, MAIN, true};
-
-  // Initialize(&g_sContext);
+  Initialize(&g_sContext);
 
   // Main super-loop! In a polling architecture, this function should call
   // your main FSM function over and over.
@@ -68,27 +66,10 @@ int main(void) {
     // Do not remove this line. This is your non-blocking check.
     PollNonBlockingLED();
     HAL_refresh(&hal);
-    Application_loop(&app, &hal);
-  //   switch (disp.screen)
-  //   {
-  //       case MAIN:
-  //         MainScreen(&g_sContext, &hal, &disp);
-  //         break;
-        
-  //       default:
-  //         break;
-  //   }
+    Application_loop(&g_sContext, &app, &hal);
   }
 }
 
-/**
- * A helper function which increments a value with a maximum. If incrementing
- * the number causes the value to hit its maximum, the number wraps around
- * to 0.
- */
-uint32_t CircularIncrement(uint32_t value, uint32_t maximum) {
-  return (value + 1) % maximum;
-}
 
 /**
  * The main constructor for your application. This function should initialize
@@ -99,9 +80,20 @@ uint32_t CircularIncrement(uint32_t value, uint32_t maximum) {
 Application Application_construct() {
   Application app;
 
+  display_t disp = {true, true, MAIN, BLUE};
+  
+  game_state_t game_state;
+  game_state.grid_length = 3;
+  game_state.stats_change = true;
+  game_state.new_cmd = true;
+  game_state.cmd.action = NONE;
+  game_state.cmd.sq_idx = -1;
+
   // Initialize local application state variables here!
   app.baudChoice = BAUD_9600;
   app.firstCall = true;
+  app.disp = disp;
+  app.game_state = game_state;
 
   return app;
 }
@@ -116,24 +108,118 @@ Application Application_construct() {
  * @param app_p:  A pointer to the main Application object.
  * @param hal_p:  A pointer to the main HAL object
  */
-void Application_loop(Application* app_p, HAL* hal_p) {
-  // Restart/Update communications if either this is the first time the
-  // application is run or if BoosterPack S2 is pressed (which means a new
-  // baudrate is being set up)
+void Application_loop(Graphics_Context* g_sContext_p, Application* app_p, HAL* hal_p) {
+  // Restart/Update communications if first run or S2 is pressed
   if (Button_isTapped(&hal_p->launchpadS2) || app_p->firstCall) {
     Application_updateCommunications(app_p, hal_p);
   }
 
-  if (UART_hasChar(&hal_p->uart)) {
-    // The character received from your serial terminal
-    char rxChar = UART_getChar(&hal_p->uart);
+  switch (app_p->disp.screen)
+  {
+      case MAIN:
+        MainScreen(g_sContext_p, hal_p, &app_p->disp);
+        break;
+      
+      case INSTRUCTIONS:
+        InstructionsScreen(g_sContext_p, hal_p, &app_p->disp);
+        break;
 
+      case HS:
+        HSScreen(g_sContext_p, hal_p, &app_p->disp, 0);
+        break;
+
+      case GAME:
+        GameScreen(g_sContext_p, hal_p, &app_p->disp, &app_p->game_state);
+        break;
+
+      // TODO: Game Over
+      default:
+        break;
+  }
+
+  static char collected[3];
+  static int count = 0;
+
+  if (UART_hasChar(&hal_p->uart) && app_p->disp.screen == GAME) {
+    char rxChar = UART_getChar(&hal_p->uart);
     char txChar = Application_interpretIncomingChar(rxChar);
 
-    // Only send a character if the UART module can send it
-    if (UART_canSend(&hal_p->uart)) UART_sendChar(&hal_p->uart, txChar);
+    // Check for Enter key
+    if (rxChar == '\r' || rxChar == '\n') {
+      if (count > 0) {
+        // ----- PROCESS COLLECTED CHARS -----
+        if (count < 2) {
+          // Action when less than 2 chars collected
+          app_p->game_state.cmd.action = INVALID;
+        } else {
+          // Action using first two chars
+          if (collected[0] == 'I' && collected[1] == 'G') {
+            // Action for "IG"
+            app_p->game_state.cmd.action = IG;
+          }
+          else if (collected[0] == 'A' && collected[1] == 'P') {
+            // Action for "AP"
+            app_p->game_state.cmd.action = AP;
+          }
+          else if (collected[0] == 'S' && collected[1] == 'P') {
+            // Action for "SP"
+            app_p->game_state.cmd.action = SP;
+          }
+          else {
+            // Invalid or unrecognized prefix
+            app_p->game_state.cmd.action = INVALID;
+          }
+        }
+
+        if (count >= 3) {
+          // Action using 3rd char
+          if (collected[2] >= '1' && collected[2] <= '8')
+            app_p->game_state.cmd.sq_idx = get_square_idx(collected[2] - '0', app_p->game_state.grid_length);
+          else
+            app_p->game_state.cmd.sq_idx = -1;
+        }
+        // -----------------------------------
+
+        count = 0;  // Wipe buffer
+      }
+      return;  // Don’t echo Enter
+    }
+
+    // Filtering logic for valid sequences: IG*, AP*, SP* (third char must be 1–8)
+    bool accept = false;
+
+    if (count == 0) {
+      // Only accept I, A, or S as first letter
+      if (txChar == 'I' || txChar == 'A' || txChar == 'S') {
+        accept = true;
+      }
+    } else if (count == 1) {
+      // Second character depends on first
+      if ((collected[0] == 'I' && txChar == 'G') ||
+          (collected[0] == 'A' && txChar == 'P') ||
+          (collected[0] == 'S' && txChar == 'P')) {
+        accept = true;
+      }
+    } else if (count == 2) {
+      // Third character must be a digit 1–8
+      if (txChar >= '1' && txChar <= '8') {
+        accept = true;
+      }
+    }
+
+    if (accept && count < 3) {
+      collected[count++] = txChar;
+      if (UART_canSend(&hal_p->uart)) UART_sendChar(&hal_p->uart, txChar);
+    }
+    // Invalid chars are ignored and not echoed
+
+    if (app_p->game_state.cmd.action == INVALID || (app_p->game_state.event == CALM && app_p->game_state.cmd.action != IG && app_p->game_state.cmd.sq_idx < 0))
+      UART_printMessage(hal_p, "\n\nInvalid Input. Try again!\n\n");
+      app_p->game_state.new_cmd = true;
   }
 }
+
+
 
 /**
  * Updates which LEDs are lit and what baud rate the UART module communicates
@@ -200,30 +286,46 @@ void Application_updateCommunications(Application* app_p, HAL* hal_p) {
   }
 }
 
+// /**
+//  * Interprets a character which was incoming and returns an interpretation of
+//  * that character. If the input character is a letter, it return L for Letter,
+//  * if a number return N for Number, and if something else, it return O for
+//  * Other.
+//  *
+//  * @param rxChar: Input character
+//  * @return :  Output character
+//  */
+// char Application_interpretIncomingChar(char rxChar) {
+//   // The character to return back to sender. By default, we assume the letter
+//   // to send back is an 'O' (assume the character is an "other" character)
+//   char txChar = 'O';
+
+//   // Numbers - if the character entered was a number, transfer back an 'N'
+//   if (rxChar >= '0' && rxChar <= '9') {
+//     txChar = 'N';
+//   }
+
+//   // Letters - if the character entered was a letter, transfer back an 'L'
+//   if ((rxChar >= 'a' && rxChar <= 'z') || (rxChar >= 'A' && rxChar <= 'Z')) {
+//     txChar = 'L';
+//   }
+
+//   return (txChar);
+// }
+
 /**
- * Interprets a character which was incoming and returns an interpretation of
- * that character. If the input character is a letter, it return L for Letter,
- * if a number return N for Number, and if something else, it return O for
- * Other.
+ * Converts any received letter to uppercase and returns it unchanged otherwise.
  *
  * @param rxChar: Input character
- * @return :  Output character
+ * @return : Output character (uppercase if letter)
  */
 char Application_interpretIncomingChar(char rxChar) {
-  // The character to return back to sender. By default, we assume the letter
-  // to send back is an 'O' (assume the character is an "other" character)
-  char txChar = 'O';
-
-  // Numbers - if the character entered was a number, transfer back an 'N'
-  if (rxChar >= '0' && rxChar <= '9') {
-    txChar = 'N';
+  // If it's a lowercase letter, convert to uppercase
+  if (rxChar >= 'a' && rxChar <= 'z') {
+    rxChar = rxChar - 'a' + 'A';
   }
 
-  // Letters - if the character entered was a letter, transfer back an 'L'
-  if ((rxChar >= 'a' && rxChar <= 'z') || (rxChar >= 'A' && rxChar <= 'Z')) {
-    txChar = 'L';
-  }
-
-  return (txChar);
+  // Return the (possibly modified) character
+  return rxChar;
 }
 
