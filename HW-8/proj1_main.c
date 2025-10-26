@@ -138,7 +138,7 @@ void Application_loop(Graphics_Context* g_sContext_p, Application* app_p, HAL* h
   }
 
   static char collected[3];
-  static int count = 0;
+  static unsigned count = 0, prev_count = 0;
 
   if (UART_hasChar(&hal_p->uart) && app_p->disp.screen == GAME) {
     char rxChar = UART_getChar(&hal_p->uart);
@@ -201,20 +201,21 @@ void Application_loop(Graphics_Context* g_sContext_p, Application* app_p, HAL* h
 
         if (count >= 3) {
           // Action using 3rd char
-          if (collected[2] >= '1' && collected[2] <= '8')
+          // if (collected[2] >= '1' && collected[2] <= '8')
             app_p->game_state.cmd.sq_idx = get_square_idx(collected[2] - '0', app_p->game_state.grid_length);
-          else
-            app_p->game_state.cmd.sq_idx = -1;
+          // else
+          //   app_p->game_state.cmd.sq_idx = -1;
         }
         // -----------------------------------
 
+        prev_count = count;
         count = 0;  // Wipe buffer
       }
       // return;  // Don’t echo Enter
     }
     
 
-    if (app_p->game_state.cmd.action == INVALID || (app_p->game_state.event == CALM && (app_p->game_state.cmd.action == AP || app_p->game_state.cmd.action == SP) && app_p->game_state.cmd.sq_idx < 0)) {
+    if (app_p->game_state.cmd.action == INVALID || (app_p->game_state.event == CALM && (app_p->game_state.cmd.action == AP || app_p->game_state.cmd.action == SP) && prev_count < 3)) {
       UART_printMessage(hal_p, "\r\n\r\nInvalid Input. Try again!");
       // app_p->game_state.new_cmd = true;
       app_p->game_state.cmd.action = INVALID;
