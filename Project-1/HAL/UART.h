@@ -19,9 +19,6 @@
 // #define UART_Config eUSCI_UART_Config
 #define UART_Config eUSCI_UART_ConfigV1
 
-// TODO: define these macros based on the UART module that is connected to USB
-// on Launchpad via XDS110
-
 #define USB_UART_PORT GPIO_PORT_P1
 #define USB_UART_PINS (GPIO_PIN2 | GPIO_PIN3)  // The pins are given to you for guidance. Also,
                            // because many students miss the parentheses

@@ -50,7 +50,7 @@ void LED_turnOn(LED* led) {
   // Internal logic: when we turn on the LED, update the isLit flag
   led->isLit = true;
 
-  // TODO: For students, replace this call with RTL calls (without driverlib)
+  // For students, replace this call with RTL calls (without driverlib)
   GPIO_setOutputHighOnPin(port, pin);
 }
 
@@ -67,7 +67,7 @@ void LED_turnOff(LED* led) {
   // Internal logic: when we turn off the LED, update the isLit flag
   led->isLit = false;
 
-  // TODO: For students, replace this call with RTL calls (without driverlib)
+  // For students, replace this call with RTL calls (without driverlib)
   GPIO_setOutputLowOnPin(port, pin);
 }
 
@@ -84,7 +84,7 @@ void LED_toggle(LED* led) {
   // Internal logic: when we toggle the LED, toggle the isLit flag.
   led->isLit = !led->isLit;
 
-  // TODO: For students, replace this call with RTL calls (without driverlib)
+  // For students, replace this call with RTL calls (without driverlib)
   GPIO_toggleOutputOnPin(port, pin);
 }
 

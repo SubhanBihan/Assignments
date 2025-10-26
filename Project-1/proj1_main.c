@@ -133,8 +133,11 @@ void Application_loop(Graphics_Context* g_sContext_p, Application* app_p, HAL* h
       case GAME:
         GameScreen(g_sContext_p, hal_p, &app_p->disp, &app_p->game_state);
         break;
+      
+      case GAMEOVER:
+        GameOverScreen(g_sContext_p, hal_p, &app_p->disp, &app_p->game_state);
+        break;
 
-      // TODO: Game Over
       default:
         break;
   }
@@ -261,24 +264,24 @@ void Application_updateCommunications(Application* app_p, HAL* hal_p) {
   LED_turnOff(&hal_p->launchpadLED2Green);
   LED_turnOff(&hal_p->launchpadLED2Blue);
 
-  // TODO: Turn on all appropriate LEDs according to the tasks below.
+  // Turn on all appropriate LEDs according to the tasks below.
   switch (app_p->baudChoice) {
     // When the baud rate is 9600, turn on Launchpad LED Red
     case BAUD_9600:
       LED_turnOn(&hal_p->launchpadLED2Red);
       break;
 
-    // TODO: When the baud rate is 19200, turn on Launchpad LED Green
+    // When the baud rate is 19200, turn on Launchpad LED Green
     case BAUD_19200:
       LED_turnOn(&hal_p->launchpadLED2Green);
       break;
 
-    // TODO: When the baud rate is 38400, turn on Launchpad LED Blue
+    // When the baud rate is 38400, turn on Launchpad LED Blue
     case BAUD_38400:
       LED_turnOn(&hal_p->launchpadLED2Blue);
       break;
 
-    // TODO: When the baud rate is 57600, turn on all Launchpad LEDs
+    // When the baud rate is 57600, turn on all Launchpad LEDs
     // (illuminates white)
     case BAUD_57600:
       LED_turnOn(&hal_p->launchpadLED2Red);

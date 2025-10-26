@@ -66,7 +66,6 @@ void change_pen_color(Graphics_Context* g_sContext_p, color_t color) {
     case GREEN:
         Graphics_setForegroundColor(g_sContext_p, GRAPHICS_COLOR_GREEN);
         break;
-        // TODO: Add more cases if needed.
     }
 }
 
@@ -90,16 +89,21 @@ void gen_square(uint8_t grid_length, square_t* square) {
 }
 
 void Flood(HAL* hal_p, game_state_t* game_state_p) {
-    // static command_t cmd = {NONE, MAX_GRID};
+    unsigned penalty = 0;
 
     if (game_state_p->new_cmd || game_state_p->cmd.action == INVALID) {
-        // if (game_state_p->cmd.action == INVALID)
-        //     UART_printMessage(hal_p, "\r\n\r\nInvalid Input. Try again!\r\n\r\n");
+        penalty = 5 * (game_state_p->year / 5);
 
         UART_printMessage(hal_p, "\r\n\r\n** The River Swells! **\r\n");
         UART_printMessage(hal_p, "Floods threaten to destroy the land.\r\n");
-        UART_printMessage(hal_p, "Options: SP (-10 TR), AP (-10 PE), IG.\r\n");       //TODO (small): How to change font color in terminal?
-        UART_printMessage(hal_p, "Ignoring (IG) will cause -5 TR and -5 PE.\r\n");
+        
+        char Line[100];
+        snprintf(Line, sizeof(Line), "Options: SP (-%d TR), AP (-%d PE), IG.\r\n", 10 + penalty, 10 + penalty);
+        UART_printMessage(hal_p, Line);
+
+        snprintf(Line, sizeof(Line), "Ignoring (IG) will cause -%d TR and -%d PE.\r\n", 5 + penalty, 5 + penalty); 
+        UART_printMessage(hal_p, Line);
+
         UART_printMessage(hal_p, "What will you do? (SP, AP, or IG)\r\n");
         UART_printMessage(hal_p, "Enter command: ");
 
@@ -112,18 +116,18 @@ void Flood(HAL* hal_p, game_state_t* game_state_p) {
         switch (game_state_p->cmd.action)
         {
             case IG:
-                game_state_p->PE -= 5;
-                game_state_p->TR -= 5;
+                game_state_p->PE -= 5 + penalty;
+                game_state_p->TR -= 5 + penalty;
                 
                 break;
 
             case SP:
                 // game_state_p->PE -= 5;
-                game_state_p->TR -= 10;
+                game_state_p->TR -= 10 + penalty;
                 break;
             
             case AP:
-                game_state_p->PE -= 10;
+                game_state_p->PE -= 10 + penalty;
                 // game_state_p->TR -= 5;
                 break;
 
@@ -139,16 +143,21 @@ void Flood(HAL* hal_p, game_state_t* game_state_p) {
 
 
 void Famine(HAL* hal_p, game_state_t* game_state_p) {
-    // static command_t cmd = {NONE, MAX_GRID};
+    unsigned penalty = 0;
 
     if (game_state_p->new_cmd || game_state_p->cmd.action == INVALID) {
-        // if (game_state_p->cmd.action == INVALID)
-        //     UART_printMessage(hal_p, "Invalid Input. Try again!\r\n\r\n");
+        penalty = 5 * (game_state_p->year / 5);
 
         UART_printMessage(hal_p, "\r\n\r\n** Famine Looms! **\r\n");
         UART_printMessage(hal_p, "A harsh winter threatens the kingdom.\r\n");
-        UART_printMessage(hal_p, "Options: SP (-15 TR), AP (-15 PE), IG.\r\n");
-        UART_printMessage(hal_p, "Ignoring (IG) will cause -10 TR and -10 PE.\r\n");
+
+        char Line[100];
+        snprintf(Line, sizeof(Line), "Options: SP (-%d TR), AP (-%d PE), IG.\r\n", 15 + penalty, 15 + penalty);
+        UART_printMessage(hal_p, Line);
+
+        snprintf(Line, sizeof(Line), "Ignoring (IG) will cause -%d TR and -%d PE.\r\n", 10 + penalty, 10 + penalty);
+        UART_printMessage(hal_p, Line);
+
         UART_printMessage(hal_p, "What will you do? (SP, AP, or IG)\r\n");
         UART_printMessage(hal_p, "Enter command: ");
 
@@ -161,18 +170,16 @@ void Famine(HAL* hal_p, game_state_t* game_state_p) {
         switch (game_state_p->cmd.action)
         {
             case IG:
-                game_state_p->PE -= 10;
-                game_state_p->TR -= 10;
+                game_state_p->PE -= 10 + penalty;
+                game_state_p->TR -= 10 + penalty;
                 break;
 
             case SP:
-                // game_state_p->PE -= 5;
-                game_state_p->TR -= 15;
+                game_state_p->TR -= 15 + penalty;
                 break;
             
             case AP:
-                game_state_p->PE -= 15;
-                // game_state_p->TR -= 5;
+                game_state_p->PE -= 15 + penalty;
                 break;
             default:
                 break;
@@ -188,25 +195,27 @@ void Famine(HAL* hal_p, game_state_t* game_state_p) {
 
 void Raid(Graphics_Context* g_sContext_p, display_t* disp_p, HAL* hal_p, game_state_t* game_state_p) {
     // Later, need to make it so only GREEN region is attacked
-    char Line[100];
+    
     static uint8_t raid_region;
     uint8_t sq_idx;
-    // static command_t cmd = {NONE, MAX_GRID};
+    unsigned penalty = 0;
 
 
     if (game_state_p->new_cmd || game_state_p->cmd.action == INVALID) {
-        // if (game_state_p->cmd.action == INVALID)
-        //     UART_printMessage(hal_p, "Invalid Input. Try again!\r\n\r\n");
+        penalty = 5 * (game_state_p->year / 5);
         // else
         if (game_state_p->cmd.action != INVALID) 
             raid_region = 1 + rand() % (SQR(game_state_p->grid_length) - 1);
 
         UART_printMessage(hal_p, "\r\n\r\n** Raiders at the Gates! **\r\n");
 
+        char Line[100];
         snprintf(Line, sizeof(Line), "They are threatening region %d!\r\n", raid_region);
         UART_printMessage(hal_p, Line);
 
-        UART_printMessage(hal_p, "Options: SP (-20 TR), AP (-15 PE), IG.\r\n");
+        snprintf(Line, sizeof(Line), "Options: SP (-%d TR), AP (-%d PE), IG.\r\n", 20 + penalty, 15 + penalty);
+        UART_printMessage(hal_p, Line);
+
         UART_printMessage(hal_p, "Ignoring (IG) will cause the region to fall.\r\n");
         UART_printMessage(hal_p, "What will you do? (SP, AP, or IG)\r\n");
         UART_printMessage(hal_p, "Enter command: ");
@@ -220,8 +229,6 @@ void Raid(Graphics_Context* g_sContext_p, display_t* disp_p, HAL* hal_p, game_st
         switch (game_state_p->cmd.action)
         {
             case IG:
-                // game_state_p->PE -= 10;
-                // game_state_p->TR -= 10;
                 sq_idx = get_square_idx(raid_region, game_state_p->grid_length);
                 if (game_state_p->squares[sq_idx].color != RED) {
                     game_state_p->squares[sq_idx].color = RED;
@@ -231,14 +238,12 @@ void Raid(Graphics_Context* g_sContext_p, display_t* disp_p, HAL* hal_p, game_st
                 break;
 
             case SP:
-                // game_state_p->PE -= 5;
-                game_state_p->TR -= 20;
+                game_state_p->TR -= 20 + penalty;
                 game_state_p->stats_change = true;
                 break;
             
             case AP:
-                game_state_p->PE -= 15;
-                // game_state_p->TR -= 5;
+                game_state_p->PE -= 15 + penalty;
                 game_state_p->stats_change = true;
                 break;
             default:
@@ -257,19 +262,19 @@ void Raid(Graphics_Context* g_sContext_p, display_t* disp_p, HAL* hal_p, game_st
 void Calm(Graphics_Context* g_sContext_p, display_t* disp_p, HAL* hal_p, game_state_t* game_state_p) {
     // TODO: Later, need to make it so only GREEN region is attacked
 
-    // static command_t cmd = {NONE, MAX_GRID};
-    char Line[100];
+    unsigned penalty = 0;
+    
     uint8_t max_idx;
 
     if (game_state_p->new_cmd || game_state_p->cmd.action == INVALID) {
-        // if (game_state_p->cmd.action == INVALID)
-        //     UART_printMessage(hal_p, "Invalid Input. Try again!\r\n\r\n");
+        penalty = 5 * (game_state_p->year / 5);
         
         max_idx = SQR(game_state_p->grid_length) - 1;
         
         UART_printMessage(hal_p, "\r\n\r\n** Calm Period **\r\n");
         UART_printMessage(hal_p, "Your kingdom is thriving.\r\n");
 
+        char Line[100];
         snprintf(Line, sizeof(Line), "Choose a region to rebuild (1-%d).\r\n", max_idx);
         UART_printMessage(hal_p, Line);
 
@@ -278,7 +283,7 @@ void Calm(Graphics_Context* g_sContext_p, display_t* disp_p, HAL* hal_p, game_st
         snprintf(Line, sizeof(Line), "Format: SP[1-%d] or AP[1-%d], Example: SP2.\r\n", max_idx, max_idx);
         UART_printMessage(hal_p, Line);
 
-        snprintf(Line, sizeof(Line), "Options: SP[1-%d] (-30 TR), AP[1-%d] (-30 PE), IG.\r\n", max_idx, max_idx);
+        snprintf(Line, sizeof(Line), "Options: SP[1-%d] (-%d TR), AP[1-%d] (-%d PE), IG.\r\n", max_idx, 30 + penalty, max_idx, 30 + penalty);
         UART_printMessage(hal_p, Line);
 
         UART_printMessage(hal_p, "Ignoring (IG) will cause +40 TR and +20 PE.\r\n");
@@ -300,8 +305,8 @@ void Calm(Graphics_Context* g_sContext_p, display_t* disp_p, HAL* hal_p, game_st
 
             case SP:            
             case AP:
-                if (game_state_p->cmd.action == SP) game_state_p->TR -= 30;
-                else                                game_state_p->PE -= 30;
+                if (game_state_p->cmd.action == SP) game_state_p->TR -= 30 + penalty;
+                else                                game_state_p->PE -= 30 + penalty;
                 
                 if (game_state_p->squares[game_state_p->cmd.sq_idx].color != GREEN) {
                     game_state_p->squares[game_state_p->cmd.sq_idx].color = GREEN;
@@ -524,9 +529,9 @@ void GameScreen(Graphics_Context* g_sContext_p, HAL* hal_p, display_t* disp_p, g
         snprintf(year_str, sizeof(year_str), "Year:%3d", game_state_p->year);
 
         // Print stats
-        Graphics_drawString(g_sContext_p, PE_str, -1, 5, 2, true);
-        Graphics_drawString(g_sContext_p, TR_str, -1, 5, 12, true);
-        Graphics_drawString(g_sContext_p, year_str, -1, 80, 7, true);
+        Graphics_drawString(g_sContext_p, PE_str, -1, 5, 1, true);
+        Graphics_drawString(g_sContext_p, TR_str, -1, 5, 11, true);
+        Graphics_drawString(g_sContext_p, year_str, -1, 80, 6, true);
 
         game_state_p->stats_change = false;
     }

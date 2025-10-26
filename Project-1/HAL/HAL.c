@@ -54,7 +54,7 @@ HAL HAL_construct() {
   hal.uart = UART_construct(USB_UART_INSTANCE, USB_UART_PORT, USB_UART_PINS);
 
   // Enable the UART at 9600 BPS
-  // TODO: Call UART_SetBaud_Enable to achieve the above goal
+  // Call UART_SetBaud_Enable to achieve the above goal
   UART_SetBaud_Enable(&hal.uart, BAUD_9600);
 
   // Once we have finished building the API, return the completed struct.
@@ -80,5 +80,5 @@ void HAL_refresh(HAL* hal) {
   Button_refresh(&hal->boosterpackS2);
   Button_refresh(&hal->boosterpackJS);
 
-  // Not real TODO: No need to add anything for UART
+  // No need to add anything for UART
 }

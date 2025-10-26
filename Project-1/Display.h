@@ -14,10 +14,10 @@
 #define MIN_LINE_SPACING 12
 #define MAX_LINE_SPACING 25
 #define MAX_GRID 5*5
-#define GRID_Y_START 24
-#define GRID_Y_END 124
-#define GRID_X_START 14
-#define GRID_X_END 114
+#define GRID_Y_START 23
+#define GRID_Y_END 128
+#define GRID_X_START 13
+#define GRID_X_END 118
 #define GRID_Y_RANGE (GRID_Y_END - GRID_Y_START)
 #define GRID_X_RANGE (GRID_X_END - GRID_X_START)
 #define SQUARE_SPACING 5
@@ -27,7 +27,6 @@
 #define min(a, b) ((a) < (b) ? (a) : (b))
 #define max(a, b) ((a) > (b) ? (a) : (b))
 
-// TODO: add colors if needed
 typedef enum {BLACK, WHITE, RED, ORANGE, YELLOW, BLUE, GREEN} color_t;
 
 typedef enum {MAIN, INSTRUCTIONS, HS, GAME, GAMEOVER} screen_t;

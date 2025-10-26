@@ -33,9 +33,7 @@ UART UART_construct(uint32_t moduleInstance, uint32_t port, uint32_t pins) {
   GPIO_setAsPeripheralModuleFunctionInputPin(uart.port, uart.pins,
                                              GPIO_PRIMARY_MODULE_FUNCTION);
 
-  // TODO: Determine what other variables need to be initialized in the config
-  // struct
-  // TODO: all uart config parameters except those related to baudrate
+  // all uart config parameters except those related to baudrate
   // generation
   uart.config.parity = EUSCI_A_UART_NO_PARITY;  // No Parity
   uart.config.msborLsbFirst = EUSCI_A_UART_LSB_FIRST;
@@ -68,7 +66,6 @@ void UART_SetBaud_Enable(UART* uart_p, UART_Baudrate baudChoice) {
   // When using the baudChoice to index the array, we are effectively saying
   // that different baudrate choices correspond with different numbers
   // without requiring excessive amounts of if-statements.
-  // TODO: fill these tables such that they work with the proper baudChoice. The
   // first column is given for 9600 BPS
   // N = 5000, 2500, 1250, 833.33333
   // 312.5, 156.25, 78.125, 52.083
@@ -76,19 +73,19 @@ void UART_SetBaud_Enable(UART* uart_p, UART_Baudrate baudChoice) {
   uint32_t firstModRegMapping[NUM_BAUD_CHOICES]    = {8, 4, 2, 1};
   uint32_t secondModRegMapping[NUM_BAUD_CHOICES]   = {0, 0, 0, 0x25};
 
-  // TODO: Replace 0s with the correct statement. Use line 71 as your guide
+
   uart_p->config.clockPrescalar = clockPrescalerMapping[baudChoice];
   uart_p->config.firstModReg = firstModRegMapping[baudChoice];
   uart_p->config.secondModReg = secondModRegMapping[baudChoice];
 
-  // TODO: initialize and enable uart instance (refer to the basic_example_UART
+  // initialize and enable uart instance (refer to the basic_example_UART
   // project for guidance)
   UART_initModule(uart_p->moduleInstance, &uart_p->config);
   UART_enableModule(uart_p->moduleInstance);
 
 }
 
-// Not-a-real TODO: read this function and its comment to learn how to implement
+// Read this function and its comment to learn how to implement
 // the other functions Notice how we use uart_p's module instance instead of the
 // name of the instance from the basic example where we used no HAL
 /**
@@ -106,10 +103,7 @@ bool UART_hasChar(UART* uart_p) {
   return (interruptStatus == EUSCI_A_UART_RECEIVE_INTERRUPT_FLAG);
 }
 
-// TODO: Complete the UART_getChar() function.
-// TODO: Write a descriptive comment explaining HOW the function is implemented.
-//       In the implementation file, prefer explaining HOW the function is
-//       implemented over simply WHAT the function does.
+
 /**
  * Uses UART_receiveData to get the byte of data received by UART
  * and returns it as a char
@@ -122,10 +116,6 @@ char UART_getChar(UART* uart_p) {
   return UART_receiveData(uart_p->moduleInstance);
 }
 
-// TODO: Complete the UART_canSend() function.
-// TODO: Write a descriptive comment explaining HOW the function is implemented.
-//       In the implementation file, prefer explaining HOW the function is
-//       implemented over simply WHAT the function does.
 /**
  * Determines if the UART is ready to transmit data by checking
  * the interrupt status of the proper system UART module.
@@ -140,7 +130,6 @@ bool UART_canSend(UART* uart_p) {
   return (UART_getInterruptStatus(uart_p->moduleInstance, EUSCI_A_UART_TRANSMIT_INTERRUPT_FLAG) == EUSCI_A_UART_TRANSMIT_INTERRUPT_FLAG);
 }
 
-// TODO: Complete the UART_sendChar() function.
 /**
  * Transmits data equivalent to ASCII value of char c as 8 bits
  * 
