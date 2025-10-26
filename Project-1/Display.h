@@ -12,6 +12,7 @@
 
 #define NUM_SCORES 5
 #define MIN_LINE_SPACING 12
+#define MAX_LINE_SPACING 25
 #define MAX_GRID 5*5
 #define GRID_Y_START 24
 #define GRID_Y_END 124
@@ -21,7 +22,10 @@
 #define GRID_X_RANGE (GRID_X_END - GRID_X_START)
 #define SQUARE_SPACING 5
 
+// Small functional macros for convenience
 #define SQR(x) ((x) * (x))
+#define min(a, b) ((a) < (b) ? (a) : (b))
+#define max(a, b) ((a) > (b) ? (a) : (b))
 
 // TODO: add colors if needed
 typedef enum {BLACK, WHITE, RED, ORANGE, YELLOW, BLUE, GREEN} color_t;
@@ -59,10 +63,12 @@ typedef struct {
     unsigned year;
     uint8_t grid_length;       // 3 or 5
     square_t squares[MAX_GRID];
+    unsigned num_green;        // Number of green squares
     bool stats_change;
     bool new_cmd;
     event_t event;
     command_t cmd;
+    unsigned high_scores[NUM_SCORES];
 } game_state_t;
 
 /**
@@ -84,8 +90,8 @@ void change_pen_color(Graphics_Context* g_sContext_p, color_t color);
 
 void MainScreen(Graphics_Context* g_sContext_p, HAL* hal_p, display_t* disp_p);
 void InstructionsScreen(Graphics_Context* g_sContext_p, HAL* hal_p, display_t* disp_p);
-void HSScreen(Graphics_Context* g_sContext_p, HAL* hal_p, display_t* disp_p, unsigned current_score);
-
+void HSScreen(Graphics_Context* g_sContext_p, HAL* hal_p, display_t* disp_p, game_state_t* game_state_p);
 void GameScreen(Graphics_Context* g_sContext_p, HAL* hal_p, display_t* disp_p, game_state_t* game_state_p);
+void GameOverScreen(Graphics_Context* g_sContext_p, HAL* hal_p, display_t* disp_p, game_state_t* game_state_p);
 
 #endif

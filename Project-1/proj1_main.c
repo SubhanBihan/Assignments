@@ -84,10 +84,12 @@ Application Application_construct() {
   
   game_state_t game_state;
   game_state.grid_length = 3;
-  game_state.stats_change = true;
-  game_state.new_cmd = true;
+  // game_state.num_green = 0;
+  // game_state.stats_change = true;
+  // game_state.new_cmd = true;
   game_state.cmd.action = NONE;
   game_state.cmd.sq_idx = -1;
+  memset(game_state.high_scores, 0, sizeof(game_state.high_scores));    // Set high scores to 0
 
   // Initialize local application state variables here!
   app.baudChoice = BAUD_9600;
