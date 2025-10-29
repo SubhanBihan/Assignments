@@ -23,6 +23,8 @@
 #define LOADVALUE 0xFFFFFFFF
 #define PRESCALER 1
 
+#define TIMER_INSTANCE TIMER32_0_BASE
+
 /**=================================================================================================
  * A Software timer object, implemented in the C object-oriented style. Use the
  * constructor [SWTimer_construct()] to create a software timer. The only method
@@ -70,5 +72,7 @@ bool SWTimer_expired(SWTimer* timer);
 // Initializes the global clock system for the MSP432, as well as a hardware
 // timer under which all of the software timers are based.
 void InitSystemTiming();
+
+uint32_t getTimerCount();
 
 #endif /* HAL_TIMER_H_ */

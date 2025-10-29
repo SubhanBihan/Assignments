@@ -13,6 +13,8 @@
 #include <HAL/Timer.h>
 #include <Display.h>
 
+#define NUM_CHAR 4
+
 
 // Non-blocking check. Whenever Launchpad S1 is pressed, LED1 turns on.
 static void InitNonBlockingLED() {
@@ -142,8 +144,13 @@ void Application_loop(Graphics_Context* g_sContext_p, Application* app_p, HAL* h
         break;
   }
 
-  static char collected[3];
+  static char collected[4];
   static unsigned count = 0, prev_count = 0;
+
+  if (app_p->game_state.cmd.action == INVALID && count > 0) {   // re-echo previous command (accpeted portion)
+    uint8_t i;
+    for (i = 0; i < count;) if (UART_canSend(&hal_p->uart)) UART_sendChar(&hal_p->uart, collected[i++]);
+  }
 
   if (UART_hasChar(&hal_p->uart) && app_p->disp.screen == GAME) {
     char rxChar = UART_getChar(&hal_p->uart);
@@ -166,16 +173,18 @@ void Application_loop(Graphics_Context* g_sContext_p, Application* app_p, HAL* h
       }
     } else if (count == 2) {
       // Third character must be a digit 1–8
-      if (txChar >= '1' && txChar <= '8') {
+      if (txChar >= '0' && txChar <= '9') {
         accept = true;
       }
     }
 
-    if (accept && count < 3 && UART_canSend(&hal_p->uart)) {
+    if (accept && count < NUM_CHAR && UART_canSend(&hal_p->uart)) { // Invalid chars are ignored and not echoed
       UART_sendChar(&hal_p->uart, txChar);
       collected[count++] = txChar;
+    } else {
+      app_p->game_state.cmd.action = INVALID;
     }
-    // Invalid chars are ignored and not echoed
+    
 
     // Check for Enter key
     if (rxChar == '\r' || rxChar == '\n') {
@@ -205,18 +214,17 @@ void Application_loop(Graphics_Context* g_sContext_p, Application* app_p, HAL* h
         }
 
         if (count >= 3) {
-          // Action using 3rd char
-          // if (collected[2] >= '1' && collected[2] <= '8')
-            app_p->game_state.cmd.sq_idx = get_square_idx(collected[2] - '0', app_p->game_state.grid_length);
-          // else
-          //   app_p->game_state.cmd.sq_idx = -1;
+          uint8_t idx = (count == 3) ? collected[2] - '0' : 10 * (collected[2] - '0') + (collected[3] - '0');
+          if (idx > 0 && idx < SQR(app_p->game_state.grid_length))
+            app_p->game_state.cmd.sq_idx = get_square_idx(idx, app_p->game_state.grid_length);
+          else
+            app_p->game_state.cmd.action == INVALID;
         }
         // -----------------------------------
 
         prev_count = count;
         count = 0;  // Wipe buffer
       }
-      // return;  // Don’t echo Enter
     }
     
 

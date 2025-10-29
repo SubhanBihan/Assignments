@@ -13,13 +13,13 @@ static volatile uint64_t hwTimerRollovers = 0;
 
 /**
  * The ISR used to increment the total number of rollovers which have passed.
- * When the TIMER32_0_BASE timer expires, this ISR is automatically called. DO
+ * When the TIMER_INSTANCE timer expires, this ISR is automatically called. DO
  * NOT DIRECTLY INVOKE THIS FUNCTION FROM YOUR CODE, or you WILL destroy the
  * accuracy of ALL software timers in your code.
  */
 void T32_INT1_IRQHandler() {
   hwTimerRollovers++;
-  Timer32_clearInterruptFlag(TIMER32_0_BASE);
+  Timer32_clearInterruptFlag(TIMER_INSTANCE);
 }
 
 /**
@@ -65,13 +65,13 @@ void InitSystemTiming() {
   // are based. This should be a periodic timer with the maximum load value
   // supported and a prescaler of 1 in order to minimize the frequency of
   // interrupts while keeping a high timer resolution.
-  Timer32_initModule(TIMER32_0_BASE, TIMER32_PRESCALER_1, TIMER32_32BIT,
+  Timer32_initModule(TIMER_INSTANCE, TIMER32_PRESCALER_1, TIMER32_32BIT,
                      TIMER32_PERIODIC_MODE);
-  Timer32_setCount(TIMER32_0_BASE, LOADVALUE);
+  Timer32_setCount(TIMER_INSTANCE, LOADVALUE);
 
   // Starts the main reference hardware timer and enables an interrupt which
   // counts rollovers
-  Timer32_startTimer(TIMER32_0_BASE, false);
+  Timer32_startTimer(TIMER_INSTANCE, false);
 
   // Enable interrupts again, after all system timing has been set up properly
   Interrupt_enableMaster();
@@ -81,7 +81,7 @@ void InitSystemTiming() {
 /**
  * Constructs a new Software Timer, using a wait time in milliseconds. The timer
  * uses the hwTimerRollovers variable to keep track of its reference time, and
- * is based off of time passing under the TIMER32_0_BASE. When first
+ * is based off of time passing under the TIMER_INSTANCE. When first
  * constructed, this timer is NOT conditioned to start. Before any calls to
  * SWTimer_expired(), SWTimer_elapsedTimeUS(), or SWTimer_percentElapsed(), you
  * MUST FIRST CALL the SWTimer_start() method.
@@ -104,12 +104,12 @@ SWTimer SWTimer_construct(uint64_t waitTime_ms) {
 
 /**
  * Starts a constructed timer by reading the current number of rollovers and
- * current load value in TIMER32_0_BASE.
+ * current load value in TIMER_INSTANCE.
  *
  * @param timer_p:    The SWTimer to start
  */
 void SWTimer_start(SWTimer* timer_p) {
-  timer_p->startCounter = Timer32_getValue(TIMER32_0_BASE);
+  timer_p->startCounter = Timer32_getValue(TIMER_INSTANCE);
   timer_p->startRollovers = hwTimerRollovers;
 }
 
@@ -128,7 +128,7 @@ void SWTimer_start(SWTimer* timer_p) {
 uint64_t SWTimer_elapsedCycles(SWTimer* timer_p) {
   uint64_t rollovers = hwTimerRollovers - timer_p->startRollovers;
   uint64_t startCounter = timer_p->startCounter;
-  uint64_t currentCounter = Timer32_getValue(TIMER32_0_BASE);
+  uint64_t currentCounter = Timer32_getValue(TIMER_INSTANCE);
   uint64_t elapsedCycles =
       (rollovers * (LOADVALUE + 1)) + startCounter - currentCounter;
 
@@ -192,4 +192,8 @@ double SWTimer_percentElapsed(SWTimer* timer_p) {
   }
 
   return result;
+}
+
+uint32_t getTimerCount() {
+  return Timer32_getValue(TIMER_INSTANCE);
 }
