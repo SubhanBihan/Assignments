@@ -472,9 +472,10 @@ void HSScreen(Graphics_Context* g_sContext_p, HAL* hal_p, display_t* disp_p, gam
     }
 }
 
-void GameScreen(Graphics_Context* g_sContext_p, HAL* hal_p, display_t* disp_p, game_state_t* game_state_p) {
+void GameScreen(Graphics_Context* g_sContext_p, HAL* hal_p, display_t* disp_p, game_state_t* game_state_p, uint32_t counter) {
     char PE_str[30], TR_str[30], year_str[30];
-    static unsigned seed = 0;
+    static const color_t colors[] = {GREEN, RED};
+    static const unsigned colors_size = sizeof(colors) / sizeof(color_t);
 
     if (disp_p->screen_changed) {
         Graphics_clearDisplay(g_sContext_p);
@@ -484,11 +485,11 @@ void GameScreen(Graphics_Context* g_sContext_p, HAL* hal_p, display_t* disp_p, g
         game_state_p->year = 1;
         game_state_p->num_green = 0;
 
-        color_t colors[] = {GREEN, RED};
-        unsigned colors_size = sizeof(colors) / sizeof(color_t);
+        // color_t colors[] = {GREEN, RED};
+        // unsigned colors_size = sizeof(colors) / sizeof(color_t);
 
         // TODO: Use Timer for random seed!!!
-        srand(seed++);
+        srand(counter);
 
         // Set (row, col) for each square
         uint8_t i;

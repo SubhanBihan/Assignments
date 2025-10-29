@@ -98,6 +98,7 @@ Application Application_construct() {
   app.firstCall = true;
   app.disp = disp;
   app.game_state = game_state;
+  app.counter = 0;
 
   return app;
 }
@@ -133,7 +134,7 @@ void Application_loop(Graphics_Context* g_sContext_p, Application* app_p, HAL* h
         break;
 
       case GAME:
-        GameScreen(g_sContext_p, hal_p, &app_p->disp, &app_p->game_state);
+        GameScreen(g_sContext_p, hal_p, &app_p->disp, &app_p->game_state, app_p->counter);
         break;
       
       case GAMEOVER:
@@ -234,6 +235,8 @@ void Application_loop(Graphics_Context* g_sContext_p, Application* app_p, HAL* h
       app_p->game_state.cmd.action = INVALID;
     }
   }
+
+  app_p->counter++;
 }
 
 

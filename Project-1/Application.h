@@ -19,6 +19,7 @@ struct _Application {
   bool firstCall;
   game_state_t game_state;
   display_t disp;
+  uint32_t counter;
 };
 
 typedef struct _Application Application;

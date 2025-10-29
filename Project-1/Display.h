@@ -90,7 +90,7 @@ void change_pen_color(Graphics_Context* g_sContext_p, color_t color);
 void MainScreen(Graphics_Context* g_sContext_p, HAL* hal_p, display_t* disp_p);
 void InstructionsScreen(Graphics_Context* g_sContext_p, HAL* hal_p, display_t* disp_p);
 void HSScreen(Graphics_Context* g_sContext_p, HAL* hal_p, display_t* disp_p, game_state_t* game_state_p);
-void GameScreen(Graphics_Context* g_sContext_p, HAL* hal_p, display_t* disp_p, game_state_t* game_state_p);
+void GameScreen(Graphics_Context* g_sContext_p, HAL* hal_p, display_t* disp_p, game_state_t* game_state_p, uint32_t counter);
 void GameOverScreen(Graphics_Context* g_sContext_p, HAL* hal_p, display_t* disp_p, game_state_t* game_state_p);
 
 #endif
