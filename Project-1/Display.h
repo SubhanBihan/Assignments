@@ -29,9 +29,9 @@
 
 typedef enum {BLACK, WHITE, RED, ORANGE, YELLOW, BLUE, GREEN} color_t;
 
-typedef enum {MAIN, INSTRUCTIONS, HS, GAME, GAMEOVER} screen_t;
+typedef enum {MAIN, INSTRUCTIONS, HS, GRIDSELECT, GAME, GAMEOVER} screen_t;
 
-typedef enum {ONE, TWO, THREE, NUM_OPTIONS} option_t;
+typedef enum {OPTION_ONE, OPTION_TWO, OPTION_THREE, NUM_OPTIONS} option_t;
 
 typedef enum {FLOOD, FAMINE, RAID, CALM, NUM_EVENTS} event_t;
 
@@ -90,6 +90,7 @@ void change_pen_color(Graphics_Context* g_sContext_p, color_t color);
 void MainScreen(Graphics_Context* g_sContext_p, HAL* hal_p, display_t* disp_p);
 void InstructionsScreen(Graphics_Context* g_sContext_p, HAL* hal_p, display_t* disp_p);
 void HSScreen(Graphics_Context* g_sContext_p, HAL* hal_p, display_t* disp_p, game_state_t* game_state_p);
+void GridSelectScreen(Graphics_Context* g_sContext_p, HAL* hal_p, display_t* disp_p, game_state_t* game_state_p);
 void GameScreen(Graphics_Context* g_sContext_p, HAL* hal_p, display_t* disp_p, game_state_t* game_state_p, uint32_t counter);
 void GameOverScreen(Graphics_Context* g_sContext_p, HAL* hal_p, display_t* disp_p, game_state_t* game_state_p);
 

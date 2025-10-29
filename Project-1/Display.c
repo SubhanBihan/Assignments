@@ -89,7 +89,7 @@ void gen_square(uint8_t grid_length, square_t* square) {
 }
 
 void Flood(HAL* hal_p, game_state_t* game_state_p) {
-    unsigned penalty = 0;
+    static unsigned penalty = 0;
 
     if (game_state_p->new_cmd || game_state_p->cmd.action == INVALID) {
         penalty = 5 * (game_state_p->year / 5);
@@ -143,7 +143,7 @@ void Flood(HAL* hal_p, game_state_t* game_state_p) {
 
 
 void Famine(HAL* hal_p, game_state_t* game_state_p) {
-    unsigned penalty = 0;
+    static unsigned penalty = 0;
 
     if (game_state_p->new_cmd || game_state_p->cmd.action == INVALID) {
         penalty = 5 * (game_state_p->year / 5);
@@ -194,18 +194,18 @@ void Famine(HAL* hal_p, game_state_t* game_state_p) {
 
 
 void Raid(Graphics_Context* g_sContext_p, display_t* disp_p, HAL* hal_p, game_state_t* game_state_p) {
-    // Later, need to make it so only GREEN region is attacked
-    
     static uint8_t raid_region;
     uint8_t sq_idx;
-    unsigned penalty = 0;
+    static unsigned penalty = 0;
 
 
     if (game_state_p->new_cmd || game_state_p->cmd.action == INVALID) {
         penalty = 5 * (game_state_p->year / 5);
-        // else
-        if (game_state_p->cmd.action != INVALID) 
-            raid_region = 1 + rand() % (SQR(game_state_p->grid_length) - 1);
+
+        if (game_state_p->cmd.action != INVALID)
+            do { 
+                raid_region = 1 + rand() % (SQR(game_state_p->grid_length) - 1);
+            } while (game_state_p->squares[get_square_idx(raid_region, game_state_p->grid_length)].color == GREEN);
 
         UART_printMessage(hal_p, "\r\n\r\n** Raiders at the Gates! **\r\n");
 
@@ -230,11 +230,11 @@ void Raid(Graphics_Context* g_sContext_p, display_t* disp_p, HAL* hal_p, game_st
         {
             case IG:
                 sq_idx = get_square_idx(raid_region, game_state_p->grid_length);
-                if (game_state_p->squares[sq_idx].color != RED) {
-                    game_state_p->squares[sq_idx].color = RED;
-                    draw_territory_square(g_sContext_p, disp_p, &game_state_p->squares[sq_idx]);
-                    game_state_p->num_green--;      // One less green square now
-                }
+
+                game_state_p->squares[sq_idx].color = RED;
+                draw_territory_square(g_sContext_p, disp_p, &game_state_p->squares[sq_idx]);
+                game_state_p->num_green--;      // One less green square now
+
                 break;
 
             case SP:
@@ -250,7 +250,7 @@ void Raid(Graphics_Context* g_sContext_p, display_t* disp_p, HAL* hal_p, game_st
                 break;
         }
 
-        game_state_p->year++;
+        if (game_state_p->PE >= 0 && game_state_p->TR >= 0) game_state_p->year++;
         game_state_p->new_cmd = true;
         game_state_p->cmd.action = NONE;
     }
@@ -260,9 +260,7 @@ void Raid(Graphics_Context* g_sContext_p, display_t* disp_p, HAL* hal_p, game_st
 
 
 void Calm(Graphics_Context* g_sContext_p, display_t* disp_p, HAL* hal_p, game_state_t* game_state_p) {
-    // TODO: Later, need to make it so only GREEN region is attacked
-
-    unsigned penalty = 0;
+    static unsigned penalty = 0;
     
     uint8_t max_idx;
 
@@ -308,11 +306,10 @@ void Calm(Graphics_Context* g_sContext_p, display_t* disp_p, HAL* hal_p, game_st
                 if (game_state_p->cmd.action == SP) game_state_p->TR -= 30 + penalty;
                 else                                game_state_p->PE -= 30 + penalty;
                 
-                if (game_state_p->squares[game_state_p->cmd.sq_idx].color != GREEN) {
-                    game_state_p->squares[game_state_p->cmd.sq_idx].color = GREEN;
-                    draw_territory_square(g_sContext_p, disp_p, &game_state_p->squares[game_state_p->cmd.sq_idx]);
-                    game_state_p->num_green++;      // One more green square now
-                }
+                game_state_p->squares[game_state_p->cmd.sq_idx].color = GREEN;
+                draw_territory_square(g_sContext_p, disp_p, &game_state_p->squares[game_state_p->cmd.sq_idx]);
+                game_state_p->num_green++;      // One more green square now
+
                 break;
             default:
                 break;
@@ -326,7 +323,7 @@ void Calm(Graphics_Context* g_sContext_p, display_t* disp_p, HAL* hal_p, game_st
 }
 
 void MainScreen(Graphics_Context* g_sContext_p, HAL* hal_p, display_t* disp_p) {
-    static option_t option_num = ONE;
+    static option_t option_num;
 
     static uint8_t j;
 
@@ -359,11 +356,11 @@ void MainScreen(Graphics_Context* g_sContext_p, HAL* hal_p, display_t* disp_p) {
 
         disp_p->screen_changed = false;
         disp_p->redraw = true;
-        option_num = ONE;
+        option_num = OPTION_ONE;
     }
 
     if (Button_isTapped(&hal_p->boosterpackS2)) {
-        CircularIncrement(option_num, NUM_OPTIONS);
+        option_num = CircularIncrement(option_num, NUM_OPTIONS);
         disp_p->redraw = true;
     }
 
@@ -373,18 +370,18 @@ void MainScreen(Graphics_Context* g_sContext_p, HAL* hal_p, display_t* disp_p) {
         change_pen_color(g_sContext_p, BLUE);
         
         switch (option_num) {
-            case ONE:
+            case OPTION_ONE:
             default:
                 Graphics_drawString(g_sContext_p, (int8_t *)">", -1, 5, MIN_LINE_SPACING * (j + 1), true);
                 Graphics_drawString(g_sContext_p, (int8_t *)"  ", -1, 5, MIN_LINE_SPACING * (j + 2), true);
                 Graphics_drawString(g_sContext_p, (int8_t *)"  ", -1, 5, MIN_LINE_SPACING * (j + 3), true);
                 break;
-            case TWO:
+            case OPTION_TWO:
                 Graphics_drawString(g_sContext_p, (int8_t *)"  ", -1, 5, MIN_LINE_SPACING * (j + 1), true);
                 Graphics_drawString(g_sContext_p, (int8_t *)">", -1, 5, MIN_LINE_SPACING * (j + 2), true);
                 Graphics_drawString(g_sContext_p, (int8_t *)"  ", -1, 5, MIN_LINE_SPACING * (j + 3), true);
                 break;
-            case THREE:
+            case OPTION_THREE:
                 Graphics_drawString(g_sContext_p, (int8_t *)"  ", -1, 5, MIN_LINE_SPACING * (j + 1), true);
                 Graphics_drawString(g_sContext_p, (int8_t *)"  ", -1, 5, MIN_LINE_SPACING * (j + 2), true);
                 Graphics_drawString(g_sContext_p, (int8_t *)">", -1, 5, MIN_LINE_SPACING * (j + 3), true);
@@ -398,13 +395,13 @@ void MainScreen(Graphics_Context* g_sContext_p, HAL* hal_p, display_t* disp_p) {
     if (Button_isTapped(&hal_p->boosterpackS1)) {
         switch (option_num)
         {
-            case ONE:
-                disp_p->screen = GAME;
+            case OPTION_ONE:
+                disp_p->screen = GRIDSELECT;
                 break;
-            case TWO:
+            case OPTION_TWO:
                 disp_p->screen = INSTRUCTIONS;
                 break;
-            case THREE:
+            case OPTION_THREE:
                 disp_p->screen = HS;
                 break;
         }
@@ -468,6 +465,75 @@ void HSScreen(Graphics_Context* g_sContext_p, HAL* hal_p, display_t* disp_p, gam
 
     if (Button_isTapped(&hal_p->boosterpackS2)) {
         disp_p->screen = MAIN;
+        disp_p->screen_changed = true;
+    }
+}
+
+void GridSelectScreen(Graphics_Context* g_sContext_p, HAL* hal_p, display_t* disp_p, game_state_t* game_state_p) {
+    static option_t option_num;
+
+    static uint8_t j;
+
+    if (disp_p->screen_changed) {
+        Graphics_clearDisplay(g_sContext_p);
+        change_pen_color(g_sContext_p, WHITE);   // Text color
+
+        uint8_t i = 1;
+
+        Graphics_drawString(g_sContext_p, (int8_t *)"Select Grid Size", -1, 10, MIN_LINE_SPACING * ++i, true);
+
+        j = i;
+
+        Graphics_drawString(g_sContext_p, (int8_t *)"  3x3", -1, 5, MIN_LINE_SPACING * ++i, true);
+        Graphics_drawString(g_sContext_p, (int8_t *)"  5x5", -1, 5, MIN_LINE_SPACING * ++i, true);
+
+        // Basic navigation
+        Graphics_drawString(g_sContext_p, (int8_t *)"BB1: Select Item", -1, 1, MIN_LINE_SPACING * ++i, true);
+        Graphics_drawString(g_sContext_p, (int8_t *)"BB2: Move Cursor", -1, 1, MIN_LINE_SPACING * ++i, true);
+        Graphics_drawString(g_sContext_p, (int8_t *)"     Down", -1, 1, MIN_LINE_SPACING * ++i, true);
+
+        disp_p->screen_changed = false;
+        disp_p->redraw = true;
+        option_num = OPTION_ONE;
+    }
+
+    if (Button_isTapped(&hal_p->boosterpackS2)) {
+        option_num = CircularIncrement(option_num, OPTION_THREE);
+        disp_p->redraw = true;
+    }
+
+    // char op1[50], op2[50], op3[50];
+
+    if (disp_p->redraw) {
+        change_pen_color(g_sContext_p, BLUE);
+        
+        switch (option_num) {
+            case OPTION_ONE:
+            default:
+                Graphics_drawString(g_sContext_p, (int8_t *)">", -1, 5, MIN_LINE_SPACING * (j + 1), true);
+                Graphics_drawString(g_sContext_p, (int8_t *)"  ", -1, 5, MIN_LINE_SPACING * (j + 2), true);
+                break;
+            case OPTION_TWO:
+                Graphics_drawString(g_sContext_p, (int8_t *)"  ", -1, 5, MIN_LINE_SPACING * (j + 1), true);
+                Graphics_drawString(g_sContext_p, (int8_t *)">", -1, 5, MIN_LINE_SPACING * (j + 2), true);
+                break;
+        }
+
+        disp_p->redraw = false;
+    }
+
+    if (Button_isTapped(&hal_p->boosterpackS1)) {
+        switch (option_num)
+        {
+            case OPTION_ONE:
+                game_state_p->grid_length = 3;
+                break;
+            case OPTION_TWO:
+                game_state_p->grid_length = 5;
+                break;
+        }
+
+        disp_p->screen = GAME;
         disp_p->screen_changed = true;
     }
 }

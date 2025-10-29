@@ -133,6 +133,10 @@ void Application_loop(Graphics_Context* g_sContext_p, Application* app_p, HAL* h
         HSScreen(g_sContext_p, hal_p, &app_p->disp, 0);
         break;
 
+      case GRIDSELECT:
+        GridSelectScreen(g_sContext_p, hal_p, &app_p->disp, &app_p->game_state);
+        break;
+
       case GAME:
         GameScreen(g_sContext_p, hal_p, &app_p->disp, &app_p->game_state, app_p->counter);
         break;
@@ -145,7 +149,7 @@ void Application_loop(Graphics_Context* g_sContext_p, Application* app_p, HAL* h
         break;
   }
 
-  static char collected[4];
+  static char collected[NUM_CHAR];
   static unsigned count = 0, prev_count = 0;
 
   if (app_p->game_state.cmd.action == INVALID && count > 0) {   // re-echo previous command (accpeted portion)
@@ -172,8 +176,7 @@ void Application_loop(Graphics_Context* g_sContext_p, Application* app_p, HAL* h
           (collected[0] == 'S' && txChar == 'P')) {
         accept = true;
       }
-    } else if (count == 2) {
-      // Third character must be a digit 1–8
+    } else if (count == 2 && app_p->game_state.event == CALM && (app_p->game_state.cmd.action == AP || app_p->game_state.cmd.action == SP)) {
       if (txChar >= '0' && txChar <= '9') {
         accept = true;
       }
@@ -186,6 +189,9 @@ void Application_loop(Graphics_Context* g_sContext_p, Application* app_p, HAL* h
       app_p->game_state.cmd.action = INVALID;
     }
     
+
+    // Check for Backspace
+    if (rxChar == '\b' && count > 0) count--;
 
     // Check for Enter key
     if (rxChar == '\r' || rxChar == '\n') {
@@ -216,7 +222,7 @@ void Application_loop(Graphics_Context* g_sContext_p, Application* app_p, HAL* h
 
         if (count >= 3) {
           uint8_t idx = (count == 3) ? collected[2] - '0' : 10 * (collected[2] - '0') + (collected[3] - '0');
-          if (idx > 0 && idx < SQR(app_p->game_state.grid_length))
+          if (idx > 0 && idx < SQR(app_p->game_state.grid_length) && app_p->game_state.squares[get_square_idx(idx, app_p->game_state.grid_length)].color == RED)
             app_p->game_state.cmd.sq_idx = get_square_idx(idx, app_p->game_state.grid_length);
           else
             app_p->game_state.cmd.action == INVALID;
