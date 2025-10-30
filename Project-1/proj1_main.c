@@ -53,6 +53,8 @@ int main(void) {
   // Initialize the main Application object and HAL object
   HAL hal = HAL_construct();
   Application app = Application_construct();
+  // uint8_t i;
+  // for (i = 0; i < NUM_SCORES; i++) app.game_state.high_scores[i] = 0;
 
   // Do not remove this line. This is your non-blocking check.
   InitNonBlockingLED();
@@ -80,25 +82,29 @@ int main(void) {
  * @return a completely initialized Application object
  */
 Application Application_construct() {
-  Application app;
+  uint8_t i;
 
-  display_t disp = {true, true, MAIN, WHITE};
-  
-  game_state_t game_state;
-  game_state.grid_length = 3;
-  // game_state.num_green = 0;
-  // game_state.stats_change = true;
-  // game_state.new_cmd = true;
-  game_state.cmd.action = NONE;
-  game_state.cmd.sq_idx = -1;
-  memset(game_state.high_scores, 0, sizeof(game_state.high_scores));    // Set high scores to 0
+  Application app;
 
   // Initialize local application state variables here!
   app.baudChoice = BAUD_9600;
   app.firstCall = true;
+
+  display_t disp = {true, true, MAIN, WHITE};
+
+  // game_state_t game_state;
+  // game_state_t game_state = {0};
+
+  app.game_state.grid_length = 3;
+  app.game_state.cmd.action = NONE;
+  app.game_state.cmd.sq_idx = -1;
+  // Set high scores to 0
+  for (i = 0; i < NUM_SCORES; i++) app.game_state.high_scores[i] = 0;
+
   app.disp = disp;
-  app.game_state = game_state;
+  // app.game_state = game_state;
   app.counter = 0;
+
 
   return app;
 }
@@ -130,7 +136,7 @@ void Application_loop(Graphics_Context* g_sContext_p, Application* app_p, HAL* h
         break;
 
       case HS:
-        HSScreen(g_sContext_p, hal_p, &app_p->disp, 0);
+        HSScreen(g_sContext_p, hal_p, &app_p->disp, &app_p->game_state);
         break;
 
       case GRIDSELECT:
@@ -150,12 +156,13 @@ void Application_loop(Graphics_Context* g_sContext_p, Application* app_p, HAL* h
   }
 
   static char collected[NUM_CHAR];
-  static unsigned count = 0, prev_count = 0;
+  static unsigned count = 0;
+  // static unsigned prev_count = 0;
 
-  if (app_p->game_state.cmd.action == INVALID && count > 0) {   // re-echo previous command (accpeted portion)
-    uint8_t i;
-    for (i = 0; i < count;) if (UART_canSend(&hal_p->uart)) UART_sendChar(&hal_p->uart, collected[i++]);
-  }
+  // if (app_p->game_state.cmd.action == INVALID && count > 0) {   // re-echo previous command (accepted portion)
+  //   uint8_t i;
+  //   for (i = 0; i < count;) if (UART_canSend(&hal_p->uart)) UART_sendChar(&hal_p->uart, collected[i++]);
+  // }
 
   if (UART_hasChar(&hal_p->uart) && app_p->disp.screen == GAME) {
     char rxChar = UART_getChar(&hal_p->uart);
@@ -176,7 +183,7 @@ void Application_loop(Graphics_Context* g_sContext_p, Application* app_p, HAL* h
           (collected[0] == 'S' && txChar == 'P')) {
         accept = true;
       }
-    } else if (count == 2 && app_p->game_state.event == CALM && (app_p->game_state.cmd.action == AP || app_p->game_state.cmd.action == SP)) {
+    } else if (count >= 2 && count < NUM_CHAR && app_p->game_state.event == CALM) {
       if (txChar >= '0' && txChar <= '9') {
         accept = true;
       }
@@ -185,61 +192,67 @@ void Application_loop(Graphics_Context* g_sContext_p, Application* app_p, HAL* h
     if (accept && count < NUM_CHAR && UART_canSend(&hal_p->uart)) { // Invalid chars are ignored and not echoed
       UART_sendChar(&hal_p->uart, txChar);
       collected[count++] = txChar;
-    } else {
-      app_p->game_state.cmd.action = INVALID;
-    }
+    } else if (rxChar == '\b' && count > 0) 
+        count--;
+      else 
+        app_p->game_state.cmd.action = INVALID;
     
 
     // Check for Backspace
-    if (rxChar == '\b' && count > 0) count--;
+    // if (rxChar == '\b' && count > 0) count--;
 
     // Check for Enter key
     if (rxChar == '\r' || rxChar == '\n') {
-      if (count > 0) {
+      app_p->game_state.cmd.action = INVALID;    // Assume INVALID by default
+      if (count >= 1) {
         // ----- PROCESS COLLECTED CHARS -----
-        if (count < 2) {
-          // Action when less than 2 chars collected
-          app_p->game_state.cmd.action = INVALID;
-        } else {
-          // Action using first two chars
-          if (collected[0] == 'I' && collected[1] == 'G') {
-            // Action for "IG"
-            app_p->game_state.cmd.action = IG;
-          }
-          else if (collected[0] == 'A' && collected[1] == 'P') {
-            // Action for "AP"
-            app_p->game_state.cmd.action = AP;
-          }
-          else if (collected[0] == 'S' && collected[1] == 'P') {
-            // Action for "SP"
-            app_p->game_state.cmd.action = SP;
-          }
-          else {
-            // Invalid or unrecognized prefix
-            app_p->game_state.cmd.action = INVALID;
-          }
+        // Action using first two chars
+        if (collected[0] == 'I' && collected[1] == 'G') {
+          // Action for "IG"
+          app_p->game_state.cmd.action = IG;
         }
+        else if (collected[0] == 'A' && collected[1] == 'P') {
+          // Action for "AP"
+          app_p->game_state.cmd.action = AP;
+        }
+        else if (collected[0] == 'S' && collected[1] == 'P') {
+          // Action for "SP"
+          app_p->game_state.cmd.action = SP;
+        }
+        // else {
+        //   // Invalid or unrecognized command
+        //   app_p->game_state.cmd.action = INVALID;
+        // }
 
-        if (count >= 3) {
+        if ((count >= 3) ^ (app_p->game_state.event == CALM && (app_p->game_state.cmd.action == AP || app_p->game_state.cmd.action == SP)))
+          app_p->game_state.cmd.action = INVALID;
+        else if (count >= 3) {
           uint8_t idx = (count == 3) ? collected[2] - '0' : 10 * (collected[2] - '0') + (collected[3] - '0');
           if (idx > 0 && idx < SQR(app_p->game_state.grid_length) && app_p->game_state.squares[get_square_idx(idx, app_p->game_state.grid_length)].color == RED)
             app_p->game_state.cmd.sq_idx = get_square_idx(idx, app_p->game_state.grid_length);
           else
-            app_p->game_state.cmd.action == INVALID;
+            app_p->game_state.cmd.action = INVALID;
         }
+        
+
+        // if (count >= 3) {
+        //   uint8_t idx = (count == 3) ? collected[2] - '0' : 10 * (collected[2] - '0') + (collected[3] - '0');
+        //   if (app_p->game_state.event == CALM && (app_p->game_state.cmd.action == AP || app_p->game_state.cmd.action == SP) && idx > 0 && idx < SQR(app_p->game_state.grid_length) && app_p->game_state.squares[get_square_idx(idx, app_p->game_state.grid_length)].color == RED)
+        //     app_p->game_state.cmd.sq_idx = get_square_idx(idx, app_p->game_state.grid_length);
+        //   else
+        //     app_p->game_state.cmd.action == INVALID;
+        // }
         // -----------------------------------
-
-        prev_count = count;
-        count = 0;  // Wipe buffer
       }
+      // prev_count = count;
+      count = 0;  // Wipe buffer
     }
-    
+  }
 
-    if (app_p->game_state.cmd.action == INVALID || (app_p->game_state.event == CALM && (app_p->game_state.cmd.action == AP || app_p->game_state.cmd.action == SP) && prev_count < 3)) {
-      UART_printMessage(hal_p, "\r\n\r\nInvalid Input. Try again!");
-      // app_p->game_state.new_cmd = true;
-      app_p->game_state.cmd.action = INVALID;
-    }
+  if (app_p->game_state.cmd.action == INVALID) {
+    UART_printMessage(hal_p, "\r\n\r\nInvalid Input. Try again!");
+    // app_p->game_state.new_cmd = true;
+    // app_p->game_state.cmd.action = INVALID;
   }
 
   app_p->counter++;

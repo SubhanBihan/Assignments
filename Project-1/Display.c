@@ -416,7 +416,7 @@ void InstructionsScreen(Graphics_Context* g_sContext_p, HAL* hal_p, display_t* d
         Graphics_clearDisplay(g_sContext_p);
         change_pen_color(g_sContext_p, WHITE);   // Text color
 
-        char i = 0;
+        int8_t i = -1;
 
         // Constant fluff-text
         Graphics_drawString(g_sContext_p, (int8_t *)"Game Instructions", -1, 5, MIN_LINE_SPACING * ++i, true);
@@ -431,7 +431,7 @@ void InstructionsScreen(Graphics_Context* g_sContext_p, HAL* hal_p, display_t* d
         Graphics_drawString(g_sContext_p, (int8_t *)"AP: Appeal (uses PE)", -1, 1, MIN_LINE_SPACING * ++i, true);
         Graphics_drawString(g_sContext_p, (int8_t *)"IG: Ignore", -1, 1, MIN_LINE_SPACING * ++i, true);
 
-        Graphics_drawString(g_sContext_p, (int8_t *)"BB2: Go Back", -1, 1, MIN_LINE_SPACING * ++i, true);
+        Graphics_drawString(g_sContext_p, (int8_t *)"BB2: Go Back", -1, 1, 5 + MIN_LINE_SPACING * ++i, true);
 
         disp_p->screen_changed = false;
     }
@@ -449,16 +449,16 @@ void HSScreen(Graphics_Context* g_sContext_p, HAL* hal_p, display_t* disp_p, gam
 
         uint8_t i, j = 1;
 
-        Graphics_drawString(g_sContext_p, (int8_t *)"High Scores", -1, 30, MAX_LINE_SPACING * j++, true);
+        Graphics_drawString(g_sContext_p, (int8_t *)"High Scores", -1, 30, MAX_LINE_SPACING * j, true);
 
         // Display the scores
         char score_string[18];
         for (i = 0; i < NUM_SCORES; i++) {
             snprintf(score_string, sizeof(score_string), "%d. %d year(s)", i + 1, game_state_p->high_scores[i]);
-            Graphics_drawString(g_sContext_p, score_string, -1, 30, 30 + MIN_LINE_SPACING * i + MAX_LINE_SPACING * j, true);
+            Graphics_drawString(g_sContext_p, score_string, -1, 30, MIN_LINE_SPACING * (i + 1) + MAX_LINE_SPACING * j, true);
         }
 
-        Graphics_drawString(g_sContext_p, (int8_t *)"BB2: Go Back", -1, 10, 100, true);
+        Graphics_drawString(g_sContext_p, (int8_t *)"BB2: Go Back", -1, 10, MIN_LINE_SPACING * (i + 1) + MAX_LINE_SPACING * j, true);
 
         disp_p->screen_changed = false;
     }
@@ -653,10 +653,10 @@ void GameOverScreen(Graphics_Context* g_sContext_p, HAL* hal_p, display_t* disp_
         Graphics_drawString(g_sContext_p, (int8_t *)"to restart", -1, 20, MIN_LINE_SPACING * ++i + MAX_LINE_SPACING * j, true);
 
         // Update the high scores
-        if (game_state_p->year > game_state_p->high_scores[NUM_SCORES])         // No need to update if this isn't met
+        if (game_state_p->year > game_state_p->high_scores[NUM_SCORES - 1])         // No need to update if this isn't met
             for (i = 0; i < NUM_SCORES; i++) {
                 if (game_state_p->year >= game_state_p->high_scores[i]) {
-                    for (j = NUM_SCORES; j > i; j--) {
+                    for (j = NUM_SCORES - 1; j > i; j--) {
                         game_state_p->high_scores[j] = game_state_p->high_scores[j-1];
                     }
                     game_state_p->high_scores[i] = game_state_p->year;
