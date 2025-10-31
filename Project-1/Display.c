@@ -4,14 +4,25 @@ uint32_t CircularIncrement(uint32_t value, uint32_t maximum) {
   return (value + 1) % maximum;
 }
 
+// unsigned chars_to_uint(const char *inp, uint8_t inp_size, uint8_t count) {
+//     unsigned result = 0;
+//     unsigned multiplier = 1;
+//     int i;
+
+//     for (i = count - 1; i >= 0; i--) {
+//         result += (inp[i] - '0') * multiplier;
+//         multiplier *= 10;
+//     }
+
+//     return result;
+// }
+
 unsigned chars_to_uint(const char *inp, uint8_t inp_size, uint8_t count) {
     unsigned result = 0;
-    unsigned multiplier = 1;
     uint8_t i;
 
-    for (i = count - 1; i >= 0; i--) {
-        result += (inp[i] - '0') * multiplier;
-        multiplier *= 10;
+    for (i = 0; i < count && i < inp_size; i++) {
+        result = result * 10 + (inp[i] - '0');
     }
 
     return result;
@@ -214,10 +225,10 @@ void Raid(Graphics_Context* g_sContext_p, display_t* disp_p, HAL* hal_p, game_st
     if (game_state_p->new_cmd || game_state_p->cmd.action == INVALID) {
         penalty = 5 * (game_state_p->year / 5);
 
-        if (game_state_p->cmd.action != INVALID)
+        if (game_state_p->new_cmd)
             do { 
                 raid_region = 1 + rand() % (SQR(game_state_p->grid_length) - 1);
-            } while (game_state_p->squares[get_square_idx(raid_region, game_state_p->grid_length)].color == GREEN);
+            } while (game_state_p->squares[get_square_idx(raid_region, game_state_p->grid_length)].color != GREEN);
 
         UART_printMessage(hal_p, "\r\n\r\n** Raiders at the Gates! **\r\n");
 
@@ -263,6 +274,7 @@ void Raid(Graphics_Context* g_sContext_p, display_t* disp_p, HAL* hal_p, game_st
         }
 
         if (game_state_p->PE >= 0 && game_state_p->TR >= 0) game_state_p->year++;
+        
         game_state_p->new_cmd = true;
         game_state_p->cmd.action = NONE;
     }
@@ -334,7 +346,11 @@ void Calm(Graphics_Context* g_sContext_p, display_t* disp_p, HAL* hal_p, game_st
     
 }
 
-void MainScreen_Text(Graphics_Context* g_sContext_p, uint8_t i, uint8_t* j) {
+void MainScreen_Text(Graphics_Context* g_sContext_p, uint8_t* j) {
+    Graphics_clearDisplay(g_sContext_p);
+    change_pen_color(g_sContext_p, WHITE);   // Text color
+    
+    uint8_t i = 0;
     // Game's name
     Graphics_drawString(g_sContext_p, (int8_t *)"Pixel Monarch", -1, 10, MIN_LINE_SPACING * ++i, true);
 
@@ -358,12 +374,7 @@ void MainScreen(Graphics_Context* g_sContext_p, HAL* hal_p, display_t* disp_p) {
     static uint8_t j;
 
     if (disp_p->screen_changed) {
-        Graphics_clearDisplay(g_sContext_p);
-        change_pen_color(g_sContext_p, WHITE);   // Text color
-
-        uint8_t i = 0;
-
-        MainScreen_Text(g_sContext_p, i, &j);
+        MainScreen_Text(g_sContext_p, &j);
 
         disp_p->screen_changed = false;
         disp_p->redraw = true;

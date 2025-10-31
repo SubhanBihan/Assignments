@@ -107,7 +107,7 @@ void Initialize(Graphics_Context *);
 void change_pen_color(Graphics_Context* g_sContext_p, color_t color);
 
 // Draw the text elements for the main screen
-void MainScreen_Text(Graphics_Context* g_sContext_p, uint8_t i, uint8_t* j);
+void MainScreen_Text(Graphics_Context* g_sContext_p, uint8_t* j);
 
 // Handle the main menu screen logic and display
 void MainScreen(Graphics_Context* g_sContext_p, HAL* hal_p, display_t* disp_p);

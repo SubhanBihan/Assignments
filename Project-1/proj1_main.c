@@ -419,9 +419,8 @@ void GameInput(Application* app_p, HAL* hal_p) {
  * @param count: Number of accepted chars
  */
 void UART_handleBackspace(HAL* hal_p, unsigned* count) {
-  if (count > 0) {
-      count--;
-      // Echo backspace sequence to visually delete character on terminal
-      UART_printMessage(hal_p, "\b \b");
+  if (*count > 0) {
+      (*count)--;  // Decrement the actual counter
+      UART_printMessage(hal_p, "\b \b");  // Erase visually
   }
 }
