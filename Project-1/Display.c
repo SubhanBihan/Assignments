@@ -4,19 +4,6 @@ uint32_t CircularIncrement(uint32_t value, uint32_t maximum) {
   return (value + 1) % maximum;
 }
 
-// unsigned chars_to_uint(const char *inp, uint8_t inp_size, uint8_t count) {
-//     unsigned result = 0;
-//     unsigned multiplier = 1;
-//     int i;
-
-//     for (i = count - 1; i >= 0; i--) {
-//         result += (inp[i] - '0') * multiplier;
-//         multiplier *= 10;
-//     }
-
-//     return result;
-// }
-
 unsigned chars_to_uint(const char *inp, uint8_t inp_size, uint8_t count) {
     unsigned result = 0;
     uint8_t i;
