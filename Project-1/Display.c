@@ -249,12 +249,10 @@ void Raid(Graphics_Context* g_sContext_p, display_t* disp_p, HAL* hal_p, game_st
 
             case SP:
                 game_state_p->TR -= 20 + penalty;
-                game_state_p->stats_change = true;
                 break;
             
             case AP:
                 game_state_p->PE -= 15 + penalty;
-                game_state_p->stats_change = true;
                 break;
             default:
                 break;
@@ -262,6 +260,7 @@ void Raid(Graphics_Context* g_sContext_p, display_t* disp_p, HAL* hal_p, game_st
 
         if (game_state_p->PE >= 0 && game_state_p->TR >= 0) game_state_p->year++;
         
+        game_state_p->stats_change = true;
         game_state_p->new_cmd = true;
         game_state_p->cmd.action = NONE;
     }
