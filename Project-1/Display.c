@@ -4,6 +4,19 @@ uint32_t CircularIncrement(uint32_t value, uint32_t maximum) {
   return (value + 1) % maximum;
 }
 
+unsigned chars_to_uint(const char *inp, uint8_t inp_size, uint8_t count) {
+    unsigned result = 0;
+    unsigned multiplier = 1;
+    uint8_t i;
+
+    for (i = count - 1; i >= 0; i--) {
+        result += (inp[i] - '0') * multiplier;
+        multiplier *= 10;
+    }
+
+    return result;
+}
+
 void UART_printMessage(HAL* hal_p, const char* msg) {
   while (*msg != '\0') {
     if (UART_canSend(&hal_p->uart)) {
@@ -69,18 +82,15 @@ void change_pen_color(Graphics_Context* g_sContext_p, color_t color) {
     }
 }
 
+// Draws square on LCD
 void draw_territory_square(Graphics_Context* g_sContext_p, display_t* disp_p, square_t* square) {
-    
-    // if (!disp_p->screen_changed) { 
-    //     change_pen_color(g_sContext_p, BLACK);
-    //     Graphics_fillRectangle(g_sContext_p, &square->R);
-    // }
-
     change_pen_color(g_sContext_p, square->color);
-    Graphics_fillRectangle(g_sContext_p, &square->R);
+
+    Graphics_fillRectangle(g_sContext_p, &square->R); // Draw the territory square
     
 }
 
+// Generates square's info
 void gen_square(uint8_t grid_length, square_t* square) {
     square->R.xMin = GRID_X_START + (GRID_X_RANGE / grid_length) * square->col;
     square->R.xMax = square->R.xMin + (GRID_X_RANGE / grid_length) - SQUARE_SPACING;
@@ -88,6 +98,8 @@ void gen_square(uint8_t grid_length, square_t* square) {
     square->R.yMax = square->R.yMin + (GRID_Y_RANGE / grid_length) - SQUARE_SPACING;
 }
 
+
+// Handles flood
 void Flood(HAL* hal_p, game_state_t* game_state_p) {
     static unsigned penalty = 0;
 
@@ -141,7 +153,7 @@ void Flood(HAL* hal_p, game_state_t* game_state_p) {
 
 }
 
-
+// Handles famine
 void Famine(HAL* hal_p, game_state_t* game_state_p) {
     static unsigned penalty = 0;
 
@@ -192,7 +204,7 @@ void Famine(HAL* hal_p, game_state_t* game_state_p) {
     }
 }
 
-
+// Handles Raid event
 void Raid(Graphics_Context* g_sContext_p, display_t* disp_p, HAL* hal_p, game_state_t* game_state_p) {
     static uint8_t raid_region;
     uint8_t sq_idx;
@@ -258,7 +270,7 @@ void Raid(Graphics_Context* g_sContext_p, display_t* disp_p, HAL* hal_p, game_st
 }
 
 
-
+// Handles Calm event
 void Calm(Graphics_Context* g_sContext_p, display_t* disp_p, HAL* hal_p, game_state_t* game_state_p) {
     static unsigned penalty = 0;
     
@@ -322,37 +334,36 @@ void Calm(Graphics_Context* g_sContext_p, display_t* disp_p, HAL* hal_p, game_st
     
 }
 
+void MainScreen_Text(Graphics_Context* g_sContext_p, uint8_t i, uint8_t* j) {
+    // Game's name
+    Graphics_drawString(g_sContext_p, (int8_t *)"Pixel Monarch", -1, 10, MIN_LINE_SPACING * ++i, true);
+
+    // Developer's name
+    Graphics_drawString(g_sContext_p, (int8_t *)"Samin Rahman", -1, 5, MIN_LINE_SPACING * ++i, true);
+    *j = i;
+
+    // Options
+    Graphics_drawString(g_sContext_p, (int8_t *)"  Play Game", -1, 5, MIN_LINE_SPACING * ++i, true);
+    Graphics_drawString(g_sContext_p, (int8_t *)"  Instructions", -1, 5, MIN_LINE_SPACING * ++i, true);
+    Graphics_drawString(g_sContext_p, (int8_t *)"  High Scores", -1, 5, MIN_LINE_SPACING * ++i, true);
+
+    // Basic navigation
+    Graphics_drawString(g_sContext_p, (int8_t *)"BB1: Select Item", -1, 1, MIN_LINE_SPACING * ++i, true);
+    Graphics_drawString(g_sContext_p, (int8_t *)"BB2: Move Cursor", -1, 1, MIN_LINE_SPACING * ++i, true);
+    Graphics_drawString(g_sContext_p, (int8_t *)"     Down", -1, 1, MIN_LINE_SPACING * ++i, true);
+}
+
 void MainScreen(Graphics_Context* g_sContext_p, HAL* hal_p, display_t* disp_p) {
     static option_t option_num;
-
     static uint8_t j;
 
     if (disp_p->screen_changed) {
-        // // wipe the screen by drawing over it with the black color as the the background
-        // Graphics_setForegroundColor(g_sContext_p, GRAPHICS_COLOR_BLACK);
-
-        // Might need to change this to only covering the '>'- DONE (?)
         Graphics_clearDisplay(g_sContext_p);
         change_pen_color(g_sContext_p, WHITE);   // Text color
 
         uint8_t i = 0;
 
-        // Game's name
-        Graphics_drawString(g_sContext_p, (int8_t *)"Pixel Monarch", -1, 10, MIN_LINE_SPACING * ++i, true);
-
-        // Developer's name
-        Graphics_drawString(g_sContext_p, (int8_t *)"Samin Rahman", -1, 5, MIN_LINE_SPACING * ++i, true);
-        j = i;
-
-        // Options
-        Graphics_drawString(g_sContext_p, (int8_t *)"  Play Game", -1, 5, MIN_LINE_SPACING * ++i, true);
-        Graphics_drawString(g_sContext_p, (int8_t *)"  Instructions", -1, 5, MIN_LINE_SPACING * ++i, true);
-        Graphics_drawString(g_sContext_p, (int8_t *)"  High Scores", -1, 5, MIN_LINE_SPACING * ++i, true);
-
-        // Basic navigation
-        Graphics_drawString(g_sContext_p, (int8_t *)"BB1: Select Item", -1, 1, MIN_LINE_SPACING * ++i, true);
-        Graphics_drawString(g_sContext_p, (int8_t *)"BB2: Move Cursor", -1, 1, MIN_LINE_SPACING * ++i, true);
-        Graphics_drawString(g_sContext_p, (int8_t *)"     Down", -1, 1, MIN_LINE_SPACING * ++i, true);
+        MainScreen_Text(g_sContext_p, i, &j);
 
         disp_p->screen_changed = false;
         disp_p->redraw = true;
@@ -364,7 +375,6 @@ void MainScreen(Graphics_Context* g_sContext_p, HAL* hal_p, display_t* disp_p) {
         disp_p->redraw = true;
     }
 
-    // char op1[50], op2[50], op3[50];
 
     if (disp_p->redraw) {
         change_pen_color(g_sContext_p, BLUE);
@@ -469,32 +479,39 @@ void HSScreen(Graphics_Context* g_sContext_p, HAL* hal_p, display_t* disp_p, gam
     }
 }
 
+void GridSelectScreen_Text(Graphics_Context* g_sContext_p, uint8_t* j) {
+    Graphics_clearDisplay(g_sContext_p);
+    change_pen_color(g_sContext_p, WHITE);   // Text color
+
+    uint8_t i = 1;
+
+    Graphics_drawString(g_sContext_p, (int8_t *)"Select Grid Size", -1, 10, MIN_LINE_SPACING * ++i, true);
+
+    *j = i;
+
+    Graphics_drawString(g_sContext_p, (int8_t *)"  3x3", -1, 5, MIN_LINE_SPACING * ++i, true);
+    Graphics_drawString(g_sContext_p, (int8_t *)"  5x5", -1, 5, MIN_LINE_SPACING * ++i, true);
+
+    // Basic navigation
+    Graphics_drawString(g_sContext_p, (int8_t *)"BB1: Select Item", -1, 1, MIN_LINE_SPACING * ++i, true);
+    Graphics_drawString(g_sContext_p, (int8_t *)"BB2: Move Cursor", -1, 1, MIN_LINE_SPACING * ++i, true);
+    Graphics_drawString(g_sContext_p, (int8_t *)"     Down", -1, 1, MIN_LINE_SPACING * ++i, true);
+}
+
 void GridSelectScreen(Graphics_Context* g_sContext_p, HAL* hal_p, display_t* disp_p, game_state_t* game_state_p) {
     static option_t option_num;
 
     static uint8_t j;
 
+    char Line[30];
+
     if (disp_p->screen_changed) {
-        Graphics_clearDisplay(g_sContext_p);
-        change_pen_color(g_sContext_p, WHITE);   // Text color
-
-        uint8_t i = 1;
-
-        Graphics_drawString(g_sContext_p, (int8_t *)"Select Grid Size", -1, 10, MIN_LINE_SPACING * ++i, true);
-
-        j = i;
-
-        Graphics_drawString(g_sContext_p, (int8_t *)"  3x3", -1, 5, MIN_LINE_SPACING * ++i, true);
-        Graphics_drawString(g_sContext_p, (int8_t *)"  5x5", -1, 5, MIN_LINE_SPACING * ++i, true);
-
-        // Basic navigation
-        Graphics_drawString(g_sContext_p, (int8_t *)"BB1: Select Item", -1, 1, MIN_LINE_SPACING * ++i, true);
-        Graphics_drawString(g_sContext_p, (int8_t *)"BB2: Move Cursor", -1, 1, MIN_LINE_SPACING * ++i, true);
-        Graphics_drawString(g_sContext_p, (int8_t *)"     Down", -1, 1, MIN_LINE_SPACING * ++i, true);
+        GridSelectScreen_Text(g_sContext_p, &j);
 
         disp_p->screen_changed = false;
         disp_p->redraw = true;
         option_num = OPTION_ONE;
+        game_state_p->defstats = ASK_PE;
     }
 
     if (Button_isTapped(&hal_p->boosterpackS2)) {
@@ -522,6 +539,22 @@ void GridSelectScreen(Graphics_Context* g_sContext_p, HAL* hal_p, display_t* dis
         disp_p->redraw = false;
     }
 
+    if (game_state_p->defstats != STATS_DONE)
+        switch (game_state_p->defstats) {
+            case ASK_PE:
+                snprintf(Line, sizeof(Line), "\r\nInitial PE [0 - %d]: ", MAX_INIT_STATS);
+                UART_printMessage(hal_p, Line);
+                game_state_p->defstats = INP_PE;
+                break;
+            case ASK_TR:
+                snprintf(Line, sizeof(Line), "\r\nInitial TR [0 - %d]: ", MAX_INIT_STATS);
+                UART_printMessage(hal_p, Line);
+                game_state_p->defstats = INP_TR;
+                break;
+            default:
+                break;
+        }
+
     if (Button_isTapped(&hal_p->boosterpackS1)) {
         switch (option_num)
         {
@@ -546,15 +579,11 @@ void GameScreen(Graphics_Context* g_sContext_p, HAL* hal_p, display_t* disp_p, g
     if (disp_p->screen_changed) {
         Graphics_clearDisplay(g_sContext_p);
 
-        game_state_p->PE = 50;
-        game_state_p->TR = 100;
+        game_state_p->PE = game_state_p->Default_PE;
+        game_state_p->TR = game_state_p->Default_TR;
         game_state_p->year = 1;
         game_state_p->num_green = 0;
 
-        // color_t colors[] = {GREEN, RED};
-        // unsigned colors_size = sizeof(colors) / sizeof(color_t);
-
-        // TODO: Use Timer for random seed!!!
         srand(counter);
 
         // Set (row, col) for each square
@@ -581,8 +610,6 @@ void GameScreen(Graphics_Context* g_sContext_p, HAL* hal_p, display_t* disp_p, g
         }
 
         disp_p->screen_changed = false;
-        // game_state_p->cmd.action = NONE;
-        // game_state_p->cmd.sq_idx = -1;
         game_state_p->stats_change = true;
         game_state_p->new_cmd = true;
     }

@@ -38,7 +38,11 @@ void Application_updateCommunications(Application* app, HAL* hal);
 // character was received (number, letter, or other)
 char Application_interpretIncomingChar(char);
 
-// // Generic circular increment function
-// uint32_t CircularIncrement(uint32_t value, uint32_t maximum);
+void ScreenSelect(Graphics_Context* g_sContext_p, Application* app_p, HAL* hal_p);
+
+void StatsInput(Application* app_p, HAL* hal_p);
+void GameInput(Application* app_p, HAL* hal_p);
+
+void UART_handleBackspace(HAL* hal_p, unsigned* count);
 
 #endif /* APPLICATION_H_ */

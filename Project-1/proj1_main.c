@@ -13,7 +13,8 @@
 #include <HAL/Timer.h>
 #include <Display.h>
 
-#define NUM_CHAR 4
+#define MAX_GAME_INP 4
+#define MAX_STATS_INP 4
 
 
 // Non-blocking check. Whenever Launchpad S1 is pressed, LED1 turns on.
@@ -97,7 +98,12 @@ Application Application_construct() {
 
   app.game_state.grid_length = 3;
   app.game_state.cmd.action = NONE;
-  app.game_state.cmd.sq_idx = -1;
+  // app.game_state.cmd.sq_idx = -1;
+  app.game_state.Default_PE = 50;
+  app.game_state.Default_TR = 100;
+  app.game_state.defstats = ASK_PE;
+
+
   // Set high scores to 0
   for (i = 0; i < NUM_SCORES; i++) app.game_state.high_scores[i] = 0;
 
@@ -125,137 +131,15 @@ void Application_loop(Graphics_Context* g_sContext_p, Application* app_p, HAL* h
     Application_updateCommunications(app_p, hal_p);
   }
 
-  switch (app_p->disp.screen)
-  {
-      case MAIN:
-        MainScreen(g_sContext_p, hal_p, &app_p->disp);
-        break;
-      
-      case INSTRUCTIONS:
-        InstructionsScreen(g_sContext_p, hal_p, &app_p->disp);
-        break;
+  ScreenSelect(g_sContext_p, app_p, hal_p);
+  
+  if (app_p->disp.screen == GRIDSELECT && app_p->game_state.defstats != STATS_DONE)   // Take UART input while in game or gridselect screen
+    StatsInput(app_p, hal_p);
+  else if (app_p->disp.screen == GAME)
+    GameInput(app_p, hal_p);
 
-      case HS:
-        HSScreen(g_sContext_p, hal_p, &app_p->disp, &app_p->game_state);
-        break;
 
-      case GRIDSELECT:
-        GridSelectScreen(g_sContext_p, hal_p, &app_p->disp, &app_p->game_state);
-        break;
-
-      case GAME:
-        GameScreen(g_sContext_p, hal_p, &app_p->disp, &app_p->game_state, app_p->counter);
-        break;
-      
-      case GAMEOVER:
-        GameOverScreen(g_sContext_p, hal_p, &app_p->disp, &app_p->game_state);
-        break;
-
-      default:
-        break;
-  }
-
-  static char collected[NUM_CHAR];
-  static unsigned count = 0;
-  // static unsigned prev_count = 0;
-
-  // if (app_p->game_state.cmd.action == INVALID && count > 0) {   // re-echo previous command (accepted portion)
-  //   uint8_t i;
-  //   for (i = 0; i < count;) if (UART_canSend(&hal_p->uart)) UART_sendChar(&hal_p->uart, collected[i++]);
-  // }
-
-  if (UART_hasChar(&hal_p->uart) && app_p->disp.screen == GAME) {
-    char rxChar = UART_getChar(&hal_p->uart);
-    char txChar = Application_interpretIncomingChar(rxChar);
-
-    // Filtering logic for valid sequences: IG*, AP*, SP* (third char must be 1–8)
-    bool accept = false;
-
-    if (count == 0) {
-      // Only accept I, A, or S as first letter
-      if (txChar == 'I' || txChar == 'A' || txChar == 'S') {
-        accept = true;
-      }
-    } else if (count == 1) {
-      // Second character depends on first
-      if ((collected[0] == 'I' && txChar == 'G') ||
-          (collected[0] == 'A' && txChar == 'P') ||
-          (collected[0] == 'S' && txChar == 'P')) {
-        accept = true;
-      }
-    } else if (count >= 2 && count < NUM_CHAR && app_p->game_state.event == CALM) {
-      if (txChar >= '0' && txChar <= '9') {
-        accept = true;
-      }
-    }
-
-    if (accept && count < NUM_CHAR && UART_canSend(&hal_p->uart)) { // Invalid chars are ignored and not echoed
-      UART_sendChar(&hal_p->uart, txChar);
-      collected[count++] = txChar;
-    } else if (rxChar == '\b' && count > 0) 
-        count--;
-      else 
-        app_p->game_state.cmd.action = INVALID;
-    
-
-    // Check for Backspace
-    // if (rxChar == '\b' && count > 0) count--;
-
-    // Check for Enter key
-    if (rxChar == '\r' || rxChar == '\n') {
-      app_p->game_state.cmd.action = INVALID;    // Assume INVALID by default
-      if (count >= 1) {
-        // ----- PROCESS COLLECTED CHARS -----
-        // Action using first two chars
-        if (collected[0] == 'I' && collected[1] == 'G') {
-          // Action for "IG"
-          app_p->game_state.cmd.action = IG;
-        }
-        else if (collected[0] == 'A' && collected[1] == 'P') {
-          // Action for "AP"
-          app_p->game_state.cmd.action = AP;
-        }
-        else if (collected[0] == 'S' && collected[1] == 'P') {
-          // Action for "SP"
-          app_p->game_state.cmd.action = SP;
-        }
-        // else {
-        //   // Invalid or unrecognized command
-        //   app_p->game_state.cmd.action = INVALID;
-        // }
-
-        if ((count >= 3) ^ (app_p->game_state.event == CALM && (app_p->game_state.cmd.action == AP || app_p->game_state.cmd.action == SP)))
-          app_p->game_state.cmd.action = INVALID;
-        else if (count >= 3) {
-          uint8_t idx = (count == 3) ? collected[2] - '0' : 10 * (collected[2] - '0') + (collected[3] - '0');
-          if (idx > 0 && idx < SQR(app_p->game_state.grid_length) && app_p->game_state.squares[get_square_idx(idx, app_p->game_state.grid_length)].color == RED)
-            app_p->game_state.cmd.sq_idx = get_square_idx(idx, app_p->game_state.grid_length);
-          else
-            app_p->game_state.cmd.action = INVALID;
-        }
-        
-
-        // if (count >= 3) {
-        //   uint8_t idx = (count == 3) ? collected[2] - '0' : 10 * (collected[2] - '0') + (collected[3] - '0');
-        //   if (app_p->game_state.event == CALM && (app_p->game_state.cmd.action == AP || app_p->game_state.cmd.action == SP) && idx > 0 && idx < SQR(app_p->game_state.grid_length) && app_p->game_state.squares[get_square_idx(idx, app_p->game_state.grid_length)].color == RED)
-        //     app_p->game_state.cmd.sq_idx = get_square_idx(idx, app_p->game_state.grid_length);
-        //   else
-        //     app_p->game_state.cmd.action == INVALID;
-        // }
-        // -----------------------------------
-      }
-      // prev_count = count;
-      count = 0;  // Wipe buffer
-    }
-  }
-
-  if (app_p->game_state.cmd.action == INVALID) {
-    UART_printMessage(hal_p, "\r\n\r\nInvalid Input. Try again!");
-    // app_p->game_state.new_cmd = true;
-    // app_p->game_state.cmd.action = INVALID;
-  }
-
-  app_p->counter++;
+  app_p->counter++;     // Update software counter every loop
 }
 
 
@@ -325,32 +209,6 @@ void Application_updateCommunications(Application* app_p, HAL* hal_p) {
   }
 }
 
-// /**
-//  * Interprets a character which was incoming and returns an interpretation of
-//  * that character. If the input character is a letter, it return L for Letter,
-//  * if a number return N for Number, and if something else, it return O for
-//  * Other.
-//  *
-//  * @param rxChar: Input character
-//  * @return :  Output character
-//  */
-// char Application_interpretIncomingChar(char rxChar) {
-//   // The character to return back to sender. By default, we assume the letter
-//   // to send back is an 'O' (assume the character is an "other" character)
-//   char txChar = 'O';
-
-//   // Numbers - if the character entered was a number, transfer back an 'N'
-//   if (rxChar >= '0' && rxChar <= '9') {
-//     txChar = 'N';
-//   }
-
-//   // Letters - if the character entered was a letter, transfer back an 'L'
-//   if ((rxChar >= 'a' && rxChar <= 'z') || (rxChar >= 'A' && rxChar <= 'Z')) {
-//     txChar = 'L';
-//   }
-
-//   return (txChar);
-// }
 
 /**
  * Converts any received letter to uppercase and returns it unchanged otherwise.
@@ -368,3 +226,202 @@ char Application_interpretIncomingChar(char rxChar) {
   return rxChar;
 }
 
+/**
+ * Selects screen (Main, Game, HS, etc.)
+ *
+ * @param g_sContext_p: LCD graphics context pointer
+ * @param app_p: Application struct object Pointer 
+ * @param hal_p: HAL struct object Pointer 
+ */
+void ScreenSelect(Graphics_Context* g_sContext_p, Application* app_p, HAL* hal_p) {
+  switch (app_p->disp.screen)
+  {
+      case MAIN:
+        MainScreen(g_sContext_p, hal_p, &app_p->disp);
+        break;
+      
+      case INSTRUCTIONS:
+        InstructionsScreen(g_sContext_p, hal_p, &app_p->disp);
+        break;
+
+      case HS:
+        HSScreen(g_sContext_p, hal_p, &app_p->disp, &app_p->game_state);
+        break;
+
+      case GRIDSELECT:
+        GridSelectScreen(g_sContext_p, hal_p, &app_p->disp, &app_p->game_state);
+        break;
+
+      case GAME:
+        GameScreen(g_sContext_p, hal_p, &app_p->disp, &app_p->game_state, app_p->counter);
+        break;
+      
+      case GAMEOVER:
+        GameOverScreen(g_sContext_p, hal_p, &app_p->disp, &app_p->game_state);
+        break;
+
+      default:
+        break;
+  }
+}
+
+/**
+ * Handles input for initial stats (PE, TR) while in Grid Select Screen
+ *
+ * @param app_p: Application struct object Pointer 
+ * @param hal_p: HAL struct object Pointer 
+ */
+void StatsInput(Application* app_p, HAL* hal_p) {
+  static char collected[MAX_STATS_INP];
+  static unsigned count = 0;
+  unsigned stat_val;
+  // static unsigned prev_count = 0;
+
+  if (app_p->game_state.defstats == INP_PE || app_p->game_state.defstats == INP_TR)
+    if (UART_hasChar(&hal_p->uart)) {
+      char rxChar = UART_getChar(&hal_p->uart);
+      char txChar = Application_interpretIncomingChar(rxChar);
+
+      // Filtering logic for valid sequences
+      bool accept = false;
+
+      if (count < MAX_STATS_INP && txChar >= '0' && txChar <= '9') {
+        accept = true;
+      }
+
+
+      if (rxChar == '\b') {                             // Check for Backspace
+        UART_handleBackspace(hal_p, &count);
+      } else if (rxChar == '\r' || rxChar == '\n') {    // Check for Enter
+          if (count > 0) {
+            stat_val = chars_to_uint(collected, MAX_STATS_INP, count);
+
+            stat_val = (stat_val > MAX_INIT_STATS) ? MAX_INIT_STATS : stat_val;
+            
+            if (app_p->game_state.defstats == INP_PE)
+              app_p->game_state.Default_PE = stat_val;
+            else
+              app_p->game_state.Default_TR = stat_val;
+          }
+
+          if (app_p->game_state.defstats == INP_PE)
+            app_p->game_state.defstats = ASK_TR;
+          else 
+            app_p->game_state.defstats = STATS_DONE;
+
+          count = 0;
+
+      } else if (accept && count < MAX_STATS_INP && UART_canSend(&hal_p->uart)) { // Valid chars (digits) are collected and echoed, Invalid chars are ignored
+          UART_sendChar(&hal_p->uart, txChar);
+          collected[count++] = txChar;
+      }
+    }
+
+}
+
+/**
+ * Handles command input while in game screen
+ *
+ * @param app_p: Application struct object Pointer 
+ * @param hal_p: HAL struct object Pointer 
+ */
+void GameInput(Application* app_p, HAL* hal_p) {
+  static char collected[MAX_GAME_INP];
+  static unsigned count = 0;
+  static bool reprint = false;
+  // static unsigned prev_count = 0;
+
+  if (reprint && count > 0) {   // re-echo previous command (accepted portion)
+    uint8_t i;
+    for (i = 0; i < count;) 
+      if (UART_canSend(&hal_p->uart)) UART_sendChar(&hal_p->uart, collected[i++]);
+    
+    reprint = false;
+  }
+
+  if (UART_hasChar(&hal_p->uart)) {
+    char rxChar = UART_getChar(&hal_p->uart);
+    char txChar = Application_interpretIncomingChar(rxChar);
+
+    // Filtering logic for valid sequences: IG*, AP*, SP* (third char must be 1–8)
+    bool accept = false;
+
+    if (count == 0) {
+      // Only accept I, A, or S as first letter
+      if (txChar == 'I' || txChar == 'A' || txChar == 'S') {
+        accept = true;
+      }
+    } else if (count == 1) {
+      // Second character depends on first
+      if ((collected[0] == 'I' && txChar == 'G') ||
+          (collected[0] == 'A' && txChar == 'P') ||
+          (collected[0] == 'S' && txChar == 'P')) {
+        accept = true;
+      }
+    } else if (count >= 2 && count < MAX_GAME_INP && app_p->game_state.event == CALM && collected[1] == 'P') {
+      if (txChar >= '0' && txChar <= '9') {
+        accept = true;
+      }
+    }
+
+
+    if (rxChar == '\b') {                             // Check for Backspace
+      UART_handleBackspace(hal_p, &count);
+
+    } else if (rxChar == '\r' || rxChar == '\n') {    // Check for Enter
+      app_p->game_state.cmd.action = INVALID;    // Assume INVALID by default
+      if (count >= 2) {
+        // ----- PROCESS COLLECTED CHARS -----
+        // Action using first two chars
+        if (collected[0] == 'I' && collected[1] == 'G') {
+          // Action for "IG"
+          app_p->game_state.cmd.action = IG;
+        }
+        else if (collected[0] == 'A' && collected[1] == 'P') {
+          // Action for "AP"
+          app_p->game_state.cmd.action = AP;
+        }
+        else if (collected[0] == 'S' && collected[1] == 'P') {
+          // Action for "SP"
+          app_p->game_state.cmd.action = SP;
+        }
+
+        if ((count >= 3) ^ (app_p->game_state.event == CALM && (app_p->game_state.cmd.action == AP || app_p->game_state.cmd.action == SP)))
+          app_p->game_state.cmd.action = INVALID;
+        else if (count >= 3) {
+          uint8_t idx = (count == 3) ? collected[2] - '0' : 10 * (collected[2] - '0') + (collected[3] - '0');
+          if (idx > 0 && idx < SQR(app_p->game_state.grid_length) && app_p->game_state.squares[get_square_idx(idx, app_p->game_state.grid_length)].color == RED)
+            app_p->game_state.cmd.sq_idx = get_square_idx(idx, app_p->game_state.grid_length);
+          else app_p->game_state.cmd.action = INVALID;
+        }
+        
+      }
+      // prev_count = count;
+      count = 0;  // Wipe buffer
+
+    } else if (accept && count < MAX_GAME_INP && UART_canSend(&hal_p->uart)) { // Valid chars are collected and echoed
+        UART_sendChar(&hal_p->uart, txChar);
+        collected[count++] = txChar;
+    } else {                                                               // Invalid chars are ignored and not echoed 
+        app_p->game_state.cmd.action = INVALID;
+        reprint = true;
+    }
+  }
+
+  if (app_p->game_state.cmd.action == INVALID) UART_printMessage(hal_p, "\r\n\r\nInvalid Input. Try again!");
+}
+
+/**
+ * Handle sbackspace in UART
+ *
+
+ * @param hal_p: HAL struct object Pointer 
+ * @param count: Number of accepted chars
+ */
+void UART_handleBackspace(HAL* hal_p, unsigned* count) {
+  if (count > 0) {
+      count--;
+      // Echo backspace sequence to visually delete character on terminal
+      UART_printMessage(hal_p, "\b \b");
+  }
+}
