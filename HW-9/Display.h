@@ -2,8 +2,10 @@
 #define DISPLAY_H_
 
 #include <HAL/HAL.h>
-#include <HAL/Graphics.h>
 #include <stdlib.h>
+
+#define TITLE_DURATION_MS 3000
+#define MIN_SECTION_GAP_ROWS 2
 
 typedef enum {BLACK, WHITE, RED, ORANGE, YELLOW, BLUE, GREEN} color_t;
 
@@ -18,6 +20,12 @@ typedef struct {
     screen_t screen;
     color_t pen_color;
 } display_t;
+
+// Increments a value and wraps around to 0 if it exceeds maximum
+void CircularIncrement(uint32_t* value, uint32_t maximum);
+
+// Decrements a value and wraps around to maximum if it goes below 0
+void CircularDecrement(uint32_t* value, uint32_t maximum);
 
 // Draw the Title Screen
 void TitleScreen(HAL* hal_p, display_t* disp_p);

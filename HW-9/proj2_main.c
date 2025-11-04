@@ -35,6 +35,8 @@ int main() {
 
   // Do not remove this line. This is your non-blocking check.
   InitNonBlockingLED();
+
+  // Main super-loop
   while (1) {
     // Do not remove this line. This is your non-blocking check.
     PollNonBlockingLED();
