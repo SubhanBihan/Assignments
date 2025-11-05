@@ -14,6 +14,10 @@ void MoveRectangle(HAL* hal_p, display_t* disp_p, Graphics_Rectangle* R, motion_
     }
 }
 
+void IsOverlap(const Graphics_Rectangle* R1, const Graphics_Rectangle* R2) {
+    return ((R1.xMax >= R2.xMin) && (R1.xMin <= R2.xMax) && (R1.yMax >= R2.yMin) && (R1.yMin <= R2.yMax));
+}
+
 
 void TitleScreen(HAL* hal_p, display_t* disp_p) {
     static SWTimer TitleTimer;  // Timer for Title screen

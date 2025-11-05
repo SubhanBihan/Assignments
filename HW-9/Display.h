@@ -64,6 +64,9 @@ void CircularIncrement(uint32_t* value, uint32_t maximum);
 // Decrements a value and wraps around to maximum if it goes below 0
 void CircularDecrement(uint32_t* value, uint32_t maximum);
 
+// Test for rectangular overlap
+void IsOverlap(const Graphics_Rectangle* R1, const Graphics_Rectangle* R2);
+
 // Draw the Title Screen
 void TitleScreen(HAL* hal_p, display_t* disp_p);
 
