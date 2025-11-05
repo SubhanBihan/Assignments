@@ -8,6 +8,12 @@ void CircularDecrement(uint32_t* value, uint32_t maximum) {
   *value = *value ? *value - 1 : maximum - 1;
 }
 
+void MoveRectangle(HAL* hal_p, display_t* disp_p, Graphics_Rectangle* R, motion_t motion) {
+    if (motion.Auto) {
+
+    }
+}
+
 
 void TitleScreen(HAL* hal_p, display_t* disp_p) {
     static SWTimer TitleTimer;  // Timer for Title screen
@@ -116,3 +122,74 @@ void MainScreen(HAL* hal_p, display_t* disp_p) {
     }
 
 }
+
+void InstructionsScreen(HAL* hal_p, display_t* disp_p) {
+    if (disp_p->screen_changed) {   // Only do these when first entering main screen (function)
+        // MainScreen_Text(&disp_p->gfx.context, &j);
+
+        // // Instructions text
+        // char* lines[] = {"  Play", "  Instructions", "  High Scores"};
+        // uint8_t num_lines = sizeof(lines) / sizeof(char*);
+
+        // Clear the display
+        GFX_clear(&disp_p->gfx);
+
+        // Set foreground color
+        GFX_setForeground(&disp_p->gfx, GRAPHICS_COLOR_WHITE);
+
+        uint8_t i = 0;  // Tracking row of current line
+
+        // Print Screen name
+        GFX_print(&disp_p->gfx, "INSTRUCTIONS", i++, 1);
+        i += MIN_SECTION_GAP_ROWS;
+
+        // Print options
+        // GFX_printTextRows(&disp_p->gfx, lines, num_lines, i, 1);
+
+        // Print navigations instructions
+
+        // Set flags to stay on this screen
+        disp_p->screen_changed = false;
+    }
+
+    if (Button_isTapped(&hal_p->boosterpackS2)) {
+        disp_p->screen = MAIN;
+        disp_p->screen_changed = true;
+    }
+}
+
+void HSScreen(HAL* hal_p, display_t* disp_p) {
+    if (disp_p->screen_changed) {   // Only do these when first entering main screen (function)
+        // MainScreen_Text(&disp_p->gfx.context, &j);
+
+        // // Instructions text
+        // char* lines[] = {"  Play", "  Instructions", "  High Scores"};
+        // uint8_t num_lines = sizeof(lines) / sizeof(char*);
+
+        // Clear the display
+        GFX_clear(&disp_p->gfx);
+
+        // Set foreground color
+        GFX_setForeground(&disp_p->gfx, GRAPHICS_COLOR_WHITE);
+
+        uint8_t i = 0;  // Tracking row of current line
+
+        // Print Screen name
+        GFX_print(&disp_p->gfx, "HIGH SCORES", i++, 1);
+        i += MIN_SECTION_GAP_ROWS;
+
+        // Print options
+        // GFX_printTextRows(&disp_p->gfx, lines, num_lines, i, 1);
+
+        // Print navigations instructions
+
+        // Set flags to stay on this screen
+        disp_p->screen_changed = false;
+    }
+
+    if (Button_isTapped(&hal_p->boosterpackS2)) {
+        disp_p->screen = MAIN;
+        disp_p->screen_changed = true;
+    }
+}
+

@@ -4,11 +4,7 @@
 #include <Display.h>
 
 struct _Application {
-  // Put your application members and FSM state variables here!
-  // =========================================================================
-//   UART_Baudrate baudChoice;
-//   bool firstCall;
-//   game_state_t game_state;
+  game_state_t game_state;
   display_t disp;
 //   uint32_t counter;
 };
