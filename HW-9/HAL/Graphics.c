@@ -84,23 +84,11 @@ void GFX_setBackground(GFX* gfx_p, uint32_t background)
 
 
 
-void GFX_drawSolidSquare(GFX* gfx_p, int x1, int x2, int y1, int y2){
-
-    Graphics_Rectangle rect;
-    rect.xMin=x1;
-    rect.xMax=x2;
-    rect.yMin=y1;
-    rect.yMax=y2;
-    Graphics_fillRectangle(&gfx_p->context,&rect);
+void GFX_drawSolidSquare(GFX* gfx_p, const Graphics_Rectangle* R){
+    Graphics_fillRectangle(&gfx_p->context, R);
 }
-void GFX_drawHollowSquare(GFX* gfx_p, int x1, int x2, int y1, int y2){
-
-    Graphics_Rectangle rect;
-    rect.xMin=x1;
-    rect.xMax=x2;
-    rect.yMin=y1;
-    rect.yMax=y2;
-    Graphics_drawRectangle(&gfx_p->context,&rect);
+void GFX_drawHollowSquare(GFX* gfx_p, const Graphics_Rectangle* R){
+    Graphics_drawRectangle(&gfx_p->context, R);
 }
 
 void GFX_drawSolidCircle(GFX* gfx_p, int x, int y, int radius)
@@ -126,6 +114,19 @@ void GFX_removeHollowCircle(GFX* gfx_p, int x, int y, int radius)
     uint32_t oldForegroundColor = gfx_p->foreground;
     GFX_setForeground(gfx_p, gfx_p->background);
     GFX_drawHollowCircle(gfx_p, x, y, radius);
+    GFX_setForeground(gfx_p, oldForegroundColor);
+}
+
+void GFX_removeSolidSquare(GFX* gfx_p, const Graphics_Rectangle* R) {
+    uint32_t oldForegroundColor = gfx_p->foreground;
+    GFX_setForeground(gfx_p, gfx_p->background);
+    Graphics_fillRectangle(&gfx_p->context, R);
+    GFX_setForeground(gfx_p, oldForegroundColor);
+}
+void GFX_removeHollowSquare(GFX* gfx_p, const Graphics_Rectangle* R) {
+    uint32_t oldForegroundColor = gfx_p->foreground;
+    GFX_setForeground(gfx_p, gfx_p->background);
+    Graphics_drawRectangle(&gfx_p->context, R);
     GFX_setForeground(gfx_p, oldForegroundColor);
 }
 

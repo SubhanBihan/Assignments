@@ -41,11 +41,14 @@ void GFX_setBackground(GFX* gfx_p, uint32_t background);
 void GFX_drawSolidCircle(GFX* gfx_p, int x, int y, int radius);
 void GFX_drawHollowCircle(GFX* gfx_p, int x, int y, int radius);
 
-void GFX_drawSolidSquare(GFX* gfx_p, int x1, int x2, int y1, int y2);
-void GFX_drawHollowSquare(GFX* gfx_p, int x1, int x2, int y1, int y2);
+void GFX_drawSolidSquare(GFX* gfx_p, const Graphics_Rectangle* R);
+void GFX_drawHollowSquare(GFX* gfx_p, const Graphics_Rectangle* R);
 
 void GFX_removeSolidCircle(GFX* gfx_p, int x, int y, int radius);
 void GFX_removeHollowCircle(GFX* gfx_p, int x, int y, int radius);
+
+void GFX_removeSolidSquare(GFX* gfx_p, const Graphics_Rectangle* R);
+void GFX_removeHollowSquare(GFX* gfx_p, const Graphics_Rectangle* R);
 
 void GFX_drawLine(GFX* gfx_p, int x1, int x2, int y1, int y2);
 

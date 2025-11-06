@@ -1,21 +1,72 @@
+// #include "Display.h"
 #include <Display.h>
 
 void CircularIncrement(uint32_t* value, uint32_t maximum) {
-  *value = (*value + 1) % maximum;
+    *value = (*value + 1) % maximum;
 }
 
 void CircularDecrement(uint32_t* value, uint32_t maximum) {
-  *value = *value ? *value - 1 : maximum - 1;
+    *value = (*value + maximum - 1) % maximum;
 }
 
-void MoveRectangle(HAL* hal_p, display_t* disp_p, Graphics_Rectangle* R, motion_t motion) {
-    if (motion.Auto) {
+bool IsOverlap(const Graphics_Rectangle* R1, const Graphics_Rectangle* R2) {
+    return ((R1->xMax >= R2->xMin) && (R1->xMin <= R2->xMax) && (R1->yMax >= R2->yMin) && (R1->yMin <= R2->yMax));
+}
 
+void MoveRectangle(HAL* hal_p, display_t* disp_p, Graphics_Rectangle* R, motion_t* motion_p) {
+    // Defines the Grid area
+    static const Graphics_Rectangle Grid = {GRID_X_START, GRID_Y_START, GRID_X_END, GRID_Y_END};
+
+    if (motion_p->exists) {
+        if (motion_p->manual) {
+
+        }
+        else {
+            if (motion_p->mode) {      // Continuous movement mode
+                if (SWTimer_expired(&motion_p->mTimer)) {
+                    // Erase the old position image
+                    GFX_removeSolidSquare(&disp_p->gfx, R);
+
+                    // Control the Horiontal and Vertical motion
+                    R->xMin = R->xMin + motion_p->left_right * motion_p->dx;
+                    R->xMax = R->xMax + motion_p->left_right * motion_p->dx;
+                    R->yMin = R->yMin + motion_p->up_down    * motion_p->dy;
+                    R->yMax = R->yMax + motion_p->up_down    * motion_p->dy;
+
+                    // If the object needs to stay, adjust the conditions
+                    if (motion_p->stay) {
+                        if (R->xMin < Grid.xMin) {
+                            R->xMin += motion_p->dx; R->xMax += motion_p->dx;
+                            motion_p->left_right = 1;
+                        }
+                        else if (R->xMax > Grid.xMax) {
+                            R->xMin -= motion_p->dx; R->xMax -= motion_p->dx;
+                            motion_p->left_right = -1;
+                        }
+
+                        if (R->yMin < Grid.yMin) {
+                            R->yMin += motion_p->dy; R->yMax += motion_p->dy;
+                            motion_p->up_down = 1;
+                        }
+                        else if (R->yMax > Grid.yMax) {
+                            R->yMin -= motion_p->dy; R->yMax -= motion_p->dy;
+                            motion_p->up_down = -1;
+                        }
+                    }
+
+
+                    if (IsOverlap(R, &Grid))           
+                        // Draw the new position image
+                        GFX_drawSolidSquare(&disp_p->gfx, R); 
+                    else
+                        // If the object is beyond the grid region, it no longer exists
+                        motion_p->exists = false;
+
+                    SWTimer_start(&motion_p->mTimer);   // Restart the timer
+                }
+            }
+        }
     }
-}
-
-void IsOverlap(const Graphics_Rectangle* R1, const Graphics_Rectangle* R2) {
-    return ((R1.xMax >= R2.xMin) && (R1.xMin <= R2.xMax) && (R1.yMax >= R2.yMin) && (R1.yMin <= R2.yMax));
 }
 
 
@@ -48,8 +99,10 @@ void TitleScreen(HAL* hal_p, display_t* disp_p) {
 }
 
 void MainScreen(HAL* hal_p, display_t* disp_p) {
-    static option_t option_num;     // Tracking the current option (cursor)
+    static option_t option_num = OPTION_ONE;
+    static option_t prev_option = OPTION_ONE;
     static uint8_t j;               // Tracking row of first option
+    uint8_t i;
 
     if (disp_p->screen_changed) {   // Only do these when first entering main screen (function)
         // MainScreen_Text(&disp_p->gfx.context, &j);
@@ -57,15 +110,15 @@ void MainScreen(HAL* hal_p, display_t* disp_p) {
         // Options text
         char* options[] = {"  Play", "  Instructions", "  High Scores"};
         uint8_t num_options = sizeof(options) / sizeof(char*);
-        char* navg_lines[] = {"BB1: Move Cursor Up", "BB2: Move Cursor Down"};
+        char* navg_lines[] = {"BB1: Cursor Up", "BB2: Cursor Down"};
 
         // Clear the display
         GFX_clear(&disp_p->gfx);
 
         // Set foreground color
-        GFX_setForeground(&disp_p->gfx, GRAPHICS_COLOR_WHITE);
+        GFX_setForeground(&disp_p->gfx, TEXT_COLOR);
 
-        uint8_t i = 0;  // Tracking row of current line
+        i = 1;  // Tracking row of current line
 
         // Print Screen name
         GFX_print(&disp_p->gfx, "MENU", i++, 1);
@@ -73,7 +126,7 @@ void MainScreen(HAL* hal_p, display_t* disp_p) {
 
         // Print options
         j = i;
-        GFX_printTextRows(&disp_p->gfx, options, num_options, i, 1);
+        GFX_printTextRows(&disp_p->gfx, options, num_options, j, 1);
 
         // Print navigations instructions
         i += num_options + MIN_SECTION_GAP_ROWS;
@@ -86,23 +139,28 @@ void MainScreen(HAL* hal_p, display_t* disp_p) {
     }
 
     if (Button_isTapped(&hal_p->boosterpackS1)) {
+        prev_option = option_num;
         CircularDecrement(&option_num, NUM_OPTIONS);
         disp_p->redraw = true;
     }
+
     if (Button_isTapped(&hal_p->boosterpackS2)) {
+        prev_option = option_num;
         CircularIncrement(&option_num, NUM_OPTIONS);
         disp_p->redraw = true;
     }
 
 
     if (disp_p->redraw) {
-        GFX_setForeground(&disp_p->gfx, GRAPHICS_COLOR_BLUE);
-
         // Erase any precious cursor
-        char* cursor_eraser[] = {">", ">", ">"};
-        GFX_printTextRows(&disp_p->gfx, cursor_eraser, sizeof(cursor_eraser) / sizeof(char*), j, 1);
+        // GFX_setForeground(&disp_p->gfx, disp_p->gfx.background);
+        GFX_setForeground(&disp_p->gfx, ARROW_COLOR);
+        // char* cursor_eraser[] = {" ", " ", " "};
+        // GFX_printTextRows(&disp_p->gfx, cursor_eraser, sizeof(cursor_eraser) / sizeof(char*), j, 1);
+        GFX_print(&disp_p->gfx, " ", j + prev_option, 1);
         
         // Print new cursor
+        // GFX_setForeground(&disp_p->gfx, ARROW_COLOR);
         GFX_print(&disp_p->gfx, ">", j + option_num, 1);
 
         disp_p->redraw = false;
@@ -139,9 +197,9 @@ void InstructionsScreen(HAL* hal_p, display_t* disp_p) {
         GFX_clear(&disp_p->gfx);
 
         // Set foreground color
-        GFX_setForeground(&disp_p->gfx, GRAPHICS_COLOR_WHITE);
+        GFX_setForeground(&disp_p->gfx, TEXT_COLOR);
 
-        uint8_t i = 0;  // Tracking row of current line
+        uint8_t i = 1;  // Tracking row of current line
 
         // Print Screen name
         GFX_print(&disp_p->gfx, "INSTRUCTIONS", i++, 1);
@@ -174,9 +232,9 @@ void HSScreen(HAL* hal_p, display_t* disp_p) {
         GFX_clear(&disp_p->gfx);
 
         // Set foreground color
-        GFX_setForeground(&disp_p->gfx, GRAPHICS_COLOR_WHITE);
+        GFX_setForeground(&disp_p->gfx, TEXT_COLOR);
 
-        uint8_t i = 0;  // Tracking row of current line
+        uint8_t i = 1;  // Tracking row of current line
 
         // Print Screen name
         GFX_print(&disp_p->gfx, "HIGH SCORES", i++, 1);
@@ -197,3 +255,73 @@ void HSScreen(HAL* hal_p, display_t* disp_p) {
     }
 }
 
+
+void GameScreen(HAL* hal_p, display_t* disp_p, game_state_t* game_state_p) {
+    char line[20];
+
+    if (disp_p->screen_changed) {   // Only do these when first entering main screen (function)
+        // Clear the display
+        GFX_clear(&disp_p->gfx);
+
+        // Set foreground color
+        GFX_setForeground(&disp_p->gfx, TEXT_COLOR);
+
+        uint8_t i = 1;  // Tracking row of current line
+
+        // Print Screen name
+        GFX_print(&disp_p->gfx, "GAME", i++, 1);
+
+        // Set foreground color
+        GFX_setForeground(&disp_p->gfx, PLAYER_COLOR);
+
+        // Draw Player HP circle (HPC)
+        GFX_drawSolidCircle(&disp_p->gfx, PLAYER_HPC_X, PLAYER_HPC_Y, HPC_RADIUS);
+
+        // Start the player's motion timer
+        SWTimer_start(&game_state_p->player.motion.mTimer);
+
+        // Set flags to stay on this screen
+        disp_p->screen_changed = false;
+        disp_p->redraw = true;
+    }
+
+
+    if (disp_p->redraw) {
+        // Set foreground color
+        GFX_setForeground(&disp_p->gfx, TEXT_COLOR);
+
+        // Player HP Text
+        snprintf(line, sizeof(line), "%d", game_state_p->player.HP);
+        // GFX_print(&disp_p->gfx, line, PLAYER_HPTEXT_X, PLAYER_HPTEXT_Y);
+        Graphics_drawString(&disp_p->gfx.context, line, -1, PLAYER_HPTEXT_X, PLAYER_HPTEXT_Y, OPAQUE_TEXT);
+
+        disp_p->redraw = false;
+    }
+
+    // Move the player
+    GFX_setForeground(&disp_p->gfx, game_state_p->player.color);
+    MoveRectangle(hal_p, disp_p, &game_state_p->player.body, &game_state_p->player.motion);
+
+    // Move the bullets
+    uint8_t i;
+    for (i = 0; i < MAX_PLAYER_BULLETS; i++) {
+        MoveRectangle(hal_p, disp_p, &game_state_p->player_bullet[i].body, &game_state_p->player_bullet[i].motion);
+    }
+
+    // Logic for shooting bullets
+    if (Button_isTapped(&hal_p->boosterpackS1)) {
+        for (i = 0; i < MAX_PLAYER_BULLETS; i++) {
+            if (!game_state_p->player_bullet[i].motion.exists) {
+                game_state_p->player_bullet[i].motion.exists = true;
+
+                game_state_p->player_bullet[i].body.xMin = AVG(game_state_p->player.body.xMin, game_state_p->player.body.xMax);
+                game_state_p->player_bullet[i].body.xMax = game_state_p->player_bullet[i].body.xMin + PROJECTILE_WIDTH;
+                game_state_p->player_bullet[i].body.yMin = game_state_p->player.body.yMax;
+                game_state_p->player_bullet[i].body.yMax = game_state_p->player_bullet[i].body.yMin + PROJECTILE_LENGTH;
+
+                SWTimer_start(&game_state_p->player_bullet[i].motion.mTimer);
+                break;
+            }
+        }
+    }
+}

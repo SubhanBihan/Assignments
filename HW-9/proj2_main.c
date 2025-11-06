@@ -30,8 +30,9 @@ int main() {
   InitSystemTiming();
 
   // Initialize the main Application object and HAL object
-  HAL hal;
+  HAL hal = HAL_construct();
   Application app;
+  Application_construct(&app);
 
   // Do not remove this line. This is your non-blocking check.
   InitNonBlockingLED();
@@ -40,6 +41,7 @@ int main() {
   while (1) {
     // Do not remove this line. This is your non-blocking check.
     PollNonBlockingLED();
+    HAL_refresh(&hal);
     Application_loop(&hal, &app);
   }
 }

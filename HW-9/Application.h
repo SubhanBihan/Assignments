@@ -20,6 +20,8 @@ typedef struct _Application Application;
  */
 void ScreenSelect(HAL* hal_p, Application* app_p);
 
+void Application_construct(Application* app_p);
+
 /**
  * The main super-loop function of the application. We place this inside of a
  * single infinite loop in main. In this way, we can model a polling system of
