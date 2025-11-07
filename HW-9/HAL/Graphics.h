@@ -30,10 +30,10 @@ GFX GFX_construct(uint32_t defaultForeground, uint32_t defaultBackground);
 void GFX_resetColors(GFX* gfx_p);
 void GFX_clear(GFX* gfx_p);
 
-void GFX_print(GFX* gfx_p, char* string, float row, float col);
-void GFX_eraseText(GFX* gfx_p, char* string, float row, float col);
+void GFX_print(GFX* gfx_p, char* string, int row, int col);
+void GFX_eraseText(GFX* gfx_p, char* string, int row, int col);
 
-int GFX_printTextRows(GFX* gfx_p, char* strings[], int numStrings, float firstRow, float col);
+int GFX_printTextRows(GFX* gfx_p, char* strings[], int numStrings, int firstRow, int col);
 
 void GFX_setForeground(GFX* gfx_p, uint32_t foreground);
 void GFX_setBackground(GFX* gfx_p, uint32_t background);

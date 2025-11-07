@@ -6,7 +6,7 @@
 
 #define BACKGROUND_COLOR GRAPHICS_COLOR_BLACK
 #define TEXT_COLOR GRAPHICS_COLOR_WHITE
-#define ARROW_COLOR GRAPHICS_COLOR_BLUE
+#define ARROW_COLOR GRAPHICS_COLOR_GREEN
 #define TITLE_DURATION_MS 3000
 #define MIN_SECTION_GAP_ROWS 2
 #define NUM_SCORES 5
@@ -22,20 +22,24 @@
 #define PLAYER_COLOR GRAPHICS_COLOR_AQUA
 #define ENEMY_COLOR GRAPHICS_COLOR_RED
 #define PLAYER_HPTEXT_X 0
-#define PLAYER_HPTEXT_Y PLAYER_HPC_Y
+#define PLAYER_HPTEXT_Y (PLAYER_HPC_Y - 3)
 #define CHARACTER_REFRESH_MS 200
-#define PROJECTILE_REFRESH_MS 200
+#define PROJECTILE_REFRESH_MS 100
 #define CHARACTER_LENGTH 10
 #define CHARACTER_DX 1
 #define CHARACTER_DY 1
 #define PROJECTILE_LENGTH 4
 #define PROJECTILE_WIDTH 1
 #define PROJECTILE_DX 2
-#define PROJECTILE_DY 2
+#define PROJECTILE_DY 5
 #define PLAYER_INIT_HP 100
 #define PLAYER_INIT_XMIN 59
 #define PLAYER_INIT_YMIN 59
 #define MAX_PLAYER_BULLETS 5
+
+
+#define MIN_LINE_SPACING 12
+#define MAX_LINE_SPACING 25
 
 // Small functional macros for convenience
 #define SQR(x) ((x) * (x))
@@ -91,10 +95,10 @@ typedef struct
 
 
 // Increments a value and wraps around to 0 if it exceeds maximum
-void CircularIncrement(uint32_t* value, uint32_t maximum);
+uint32_t CircularIncrement(uint32_t value, uint32_t maximum);
 
 // Decrements a value and wraps around to maximum if it goes below 0
-void CircularDecrement(uint32_t* value, uint32_t maximum);
+uint32_t CircularDecrement(uint32_t value, uint32_t maximum);
 
 // Function for controlling object (rectangle) motion
 void MoveRectangle(HAL* hal_p, display_t* disp_p, Graphics_Rectangle* R, motion_t* motion_p);
@@ -105,8 +109,8 @@ bool IsOverlap(const Graphics_Rectangle* R1, const Graphics_Rectangle* R2);
 // Draw the Title Screen
 void TitleScreen(HAL* hal_p, display_t* disp_p);
 
-// // Draw the text elements for the main screen
-// void MainScreen_Text(uint8_t* j);
+// Draw the text elements for the main screen
+void MainScreen_Text(display_t* disp_p, uint8_t* j);
 
 // Handle the main menu screen logic and display
 void MainScreen(HAL* hal_p, display_t* disp_p);

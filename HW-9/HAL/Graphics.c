@@ -42,7 +42,7 @@ void GFX_clear(GFX* gfx_p)
     Graphics_clearDisplay(&gfx_p->context);
 }
 
-void GFX_print(GFX* gfx_p, char* string, float row, float col)
+void GFX_print(GFX* gfx_p, char* string, int row, int col)
 {
     int yPosition = row * Graphics_getFontHeight(gfx_p->context.font);
     int xPosition = col * Graphics_getFontMaxWidth(gfx_p->context.font);
@@ -50,7 +50,7 @@ void GFX_print(GFX* gfx_p, char* string, float row, float col)
     Graphics_drawString(&gfx_p->context, (int8_t*) string, -1, xPosition, yPosition, OPAQUE_TEXT);
 }
 
-void GFX_eraseText(GFX* gfx_p, char* string, float row, float col) {
+void GFX_eraseText(GFX* gfx_p, char* string, int row, int col) {
     uint32_t oldForegroundColor = gfx_p->foreground;
     GFX_setForeground(gfx_p, gfx_p->background);
 
@@ -62,7 +62,7 @@ void GFX_eraseText(GFX* gfx_p, char* string, float row, float col) {
     GFX_setForeground(gfx_p, oldForegroundColor);
 }
 
-int GFX_printTextRows(GFX* gfx_p, char* strings[], int numStrings, float firstRow, float col) {
+int GFX_printTextRows(GFX* gfx_p, char* strings[], int numStrings, int firstRow, int col) {
     int i; for (i = 0; i < numStrings; i++) {
         GFX_print(gfx_p, strings[i], firstRow++, col);
     }

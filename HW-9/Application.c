@@ -37,7 +37,7 @@ void Application_construct(Application* app_p) {
 
     // Set the display struct
     app_p->disp.gfx = GFX_construct(TEXT_COLOR, BACKGROUND_COLOR);
-    GFX_resetColors(&app_p->disp.gfx);
+    // GFX_resetColors(&app_p->disp.gfx);
     app_p->disp.screen_changed = true;
     app_p->disp.redraw = true;
     app_p->disp.screen = TITLE;
