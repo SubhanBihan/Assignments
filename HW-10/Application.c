@@ -23,9 +23,9 @@ void ScreenSelect(HAL* hal_p, Application* app_p) {
             GameScreen(hal_p, &app_p->disp, &app_p->game_state);
             break;
         
-        // case GAMEOVER:
-        //     GameOverScreen(hal_p, &app_p->disp);
-        //     break;
+        case GAMEOVER:
+            GameOverScreen(hal_p, &app_p->disp, &app_p->game_state);
+            break;
         
         default:
             break;
@@ -42,32 +42,6 @@ void Application_construct(Application* app_p) {
     app_p->disp.redraw = true;
     app_p->disp.screen = TITLE;
 
-    // ***** Set the Initial Game State *****
-    // For player
-    app_p->game_state.player.body.xMin = PLAYER_INIT_XMIN;
-    app_p->game_state.player.body.xMax = app_p->game_state.player.body.xMin + CHARACTER_LENGTH;
-    app_p->game_state.player.body.yMin = PLAYER_INIT_YMIN;
-    app_p->game_state.player.body.yMax = app_p->game_state.player.body.yMin + CHARACTER_LENGTH;
-
-    app_p->game_state.player.color = PLAYER_COLOR;
-    app_p->game_state.player.HP = PLAYER_INIT_HP;
-    app_p->game_state.player.motion = (motion_t) {true, true, false, true, PLUS, PLUS, CHARACTER_DX, CHARACTER_DY, SWTimer_construct(CHARACTER_REFRESH_MS), CHARACTER_REFRESH_MS};
-
-    // For Enemy
-    app_p->game_state.enemy.body.xMin = ENEMY_INIT_XMIN;
-    app_p->game_state.enemy.body.xMax = app_p->game_state.enemy.body.xMin + CHARACTER_LENGTH;
-    app_p->game_state.enemy.body.yMin = ENEMY_INIT_YMIN;
-    app_p->game_state.enemy.body.yMax = app_p->game_state.enemy.body.yMin + CHARACTER_LENGTH;
-
-    app_p->game_state.enemy.color = ENEMY_COLOR;
-    app_p->game_state.enemy.HP = ENEMY_INIT_HP;
-    app_p->game_state.enemy.motion = (motion_t) {true, true, false, true, ZERO, ZERO, CHARACTER_DX, CHARACTER_DY, SWTimer_construct(CHARACTER_REFRESH_MS), CHARACTER_REFRESH_MS};
-
-
-    // For bullets
-    for (i = 0; i < MAX_PLAYER_BULLETS; i++) {
-        app_p->game_state.player_bullet[i].motion = (motion_t) {false, false, false, true, MINUS, ZERO, PROJECTILE_DX, PROJECTILE_DY, SWTimer_construct(PROJECTILE_REFRESH_MS), PROJECTILE_REFRESH_MS};
-    }
 
     // Set high scores to 0
     for (i = 0; i < NUM_SCORES; i++) app_p->game_state.high_scores[i] = 0;

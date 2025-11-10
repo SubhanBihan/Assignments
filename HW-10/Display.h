@@ -8,6 +8,10 @@
 #define BACKGROUND_COLOR GRAPHICS_COLOR_BLACK
 #define TEXT_COLOR GRAPHICS_COLOR_WHITE
 #define ARROW_COLOR GRAPHICS_COLOR_GREEN
+#define GAME_TIMER_MS 10
+
+#define MIN_LINE_SPACING 12
+#define MAX_LINE_SPACING 25
 
 #define TITLE_DURATION_MS 3000
 #define MIN_SECTION_GAP_ROWS 2
@@ -16,6 +20,8 @@
 #define GRID_Y_END 127
 #define GRID_X_START 20
 #define GRID_X_END 107
+#define GRID_X_RANGE (GRID_X_END - GRID_X_START)
+#define GRID_Y_RANGE (GRID_Y_END - GRID_Y_START)
 #define HPC_RADIUS 10
 
 // Character
@@ -30,6 +36,7 @@
 #define PROJECTILE_WIDTH 1
 #define PROJECTILE_DX 2
 #define PROJECTILE_DY 5
+#define PROJECTILE_DAMAGE 5
 
 // Player
 #define PLAYER_COLOR GRAPHICS_COLOR_AQUA
@@ -40,6 +47,7 @@
 #define PLAYER_INIT_HP 100
 #define PLAYER_INIT_XMIN 59
 #define PLAYER_INIT_YMIN 59
+#define MAX_PLAYER_BULLETS 5
 
 // Enemy
 #define ENEMY_COLOR GRAPHICS_COLOR_RED
@@ -50,12 +58,11 @@
 #define ENEMY_INIT_HP 500
 #define ENEMY_INIT_XMIN 59
 #define ENEMY_INIT_YMIN 15
+#define MAX_ENEMY_BULLETS 40
+#define ENEMY_BULLET_SPACING 4
+#define ENEMY_MID_PATTERN_MS 1000
+#define ENEMY_MID_ATTACK_MS 200
 
-#define MAX_PLAYER_BULLETS 5
-
-
-#define MIN_LINE_SPACING 12
-#define MAX_LINE_SPACING 25
 
 // Small functional macros for convenience
 #define SQR(x) ((x) * (x))
@@ -70,6 +77,9 @@ typedef enum {TITLE, MAIN, INSTRUCTIONS, HS, GAME, GAMEOVER} screen_t;
 typedef enum {OPTION_ONE, OPTION_TWO, OPTION_THREE, NUM_OPTIONS} option_t;
 
 typedef enum {MINUS = -1, ZERO, PLUS} direction_t;
+
+// Attack pattern
+typedef enum {VERTICAL, HORIZONTAL, NUM_PATTERNS} attack_t;       
 
 typedef struct {
     GFX gfx;
@@ -94,7 +104,7 @@ typedef struct
 typedef struct {
     Graphics_Rectangle body;
     uint32_t color;
-    uint16_t HP;
+    int16_t HP;
     motion_t motion;
 } character_t;
 
@@ -107,6 +117,8 @@ typedef struct
 {
     character_t player, enemy;
     projectile_t player_bullet[MAX_PLAYER_BULLETS];
+    projectile_t enemy_bullet[MAX_ENEMY_BULLETS];
+    attack_t enemy_pattern;
     uint32_t time;
     uint32_t high_scores[NUM_SCORES];
 } game_state_t;
@@ -141,5 +153,7 @@ void HSScreen(HAL* hal_p, display_t* disp_p);
 
 // Game Screen
 void GameScreen(HAL* hal_p, display_t* disp_p, game_state_t* game_state_p);
+
+void GameOverScreen(HAL* hal_p, display_t* disp_p, game_state_t* game_state_p);
 
 #endif

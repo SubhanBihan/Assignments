@@ -17,7 +17,7 @@ void MoveRectangle(HAL* hal_p, display_t* disp_p, Graphics_Rectangle* R, motion_
     // Defines the Grid area
     static const Graphics_Rectangle Grid = {GRID_X_START, GRID_Y_START, GRID_X_END, GRID_Y_END};
 
-    if (motion_p->exists) {
+    // if (motion_p->exists)
         if (motion_p->manual) {
 
         }
@@ -27,46 +27,48 @@ void MoveRectangle(HAL* hal_p, display_t* disp_p, Graphics_Rectangle* R, motion_
                     // Erase the old position image
                     GFX_removeSolidSquare(&disp_p->gfx, R);
 
-                    // Control the Horiontal and Vertical motion
-                    R->xMin = R->xMin + motion_p->left_right * motion_p->dx;
-                    R->xMax = R->xMax + motion_p->left_right * motion_p->dx;
-                    R->yMin = R->yMin + motion_p->up_down    * motion_p->dy;
-                    R->yMax = R->yMax + motion_p->up_down    * motion_p->dy;
+                    if (motion_p->exists) {
+                        // Control the Horiontal and Vertical motion
+                        R->xMin = R->xMin + motion_p->left_right * motion_p->dx;
+                        R->xMax = R->xMax + motion_p->left_right * motion_p->dx;
+                        R->yMin = R->yMin + motion_p->up_down    * motion_p->dy;
+                        R->yMax = R->yMax + motion_p->up_down    * motion_p->dy;
 
-                    // If the object needs to stay, adjust the conditions
-                    if (motion_p->stay) {
-                        if (R->xMin < Grid.xMin) {
-                            R->xMin += motion_p->dx; R->xMax += motion_p->dx;
-                            motion_p->left_right = 1;
-                        }
-                        else if (R->xMax > Grid.xMax) {
-                            R->xMin -= motion_p->dx; R->xMax -= motion_p->dx;
-                            motion_p->left_right = -1;
+                        // If the object needs to stay, adjust the conditions
+                        if (motion_p->stay) {
+                            if (R->xMin < Grid.xMin) {
+                                R->xMin += motion_p->dx; R->xMax += motion_p->dx;
+                                motion_p->left_right = 1;
+                            }
+                            else if (R->xMax > Grid.xMax) {
+                                R->xMin -= motion_p->dx; R->xMax -= motion_p->dx;
+                                motion_p->left_right = -1;
+                            }
+
+                            if (R->yMin < Grid.yMin) {
+                                R->yMin += motion_p->dy; R->yMax += motion_p->dy;
+                                motion_p->up_down = 1;
+                            }
+                            else if (R->yMax > Grid.yMax) {
+                                R->yMin -= motion_p->dy; R->yMax -= motion_p->dy;
+                                motion_p->up_down = -1;
+                            }
                         }
 
-                        if (R->yMin < Grid.yMin) {
-                            R->yMin += motion_p->dy; R->yMax += motion_p->dy;
-                            motion_p->up_down = 1;
-                        }
-                        else if (R->yMax > Grid.yMax) {
-                            R->yMin -= motion_p->dy; R->yMax -= motion_p->dy;
-                            motion_p->up_down = -1;
-                        }
+
+                        if (IsOverlap(R, &Grid))           
+                            // Draw the new position image
+                            GFX_drawSolidSquare(&disp_p->gfx, R); 
+                        else
+                            // If the object is beyond the grid region, it no longer exists
+                            motion_p->exists = false;
+
+                        SWTimer_start(&motion_p->mTimer);   // Restart the timer
                     }
-
-
-                    if (IsOverlap(R, &Grid))           
-                        // Draw the new position image
-                        GFX_drawSolidSquare(&disp_p->gfx, R); 
-                    else
-                        // If the object is beyond the grid region, it no longer exists
-                        motion_p->exists = false;
-
-                    SWTimer_start(&motion_p->mTimer);   // Restart the timer
                 }
             }
         }
-    }
+    
 }
 
 
@@ -350,6 +352,13 @@ void HSScreen(HAL* hal_p, display_t* disp_p) {
 
 void GameScreen(HAL* hal_p, display_t* disp_p, game_state_t* game_state_p) {
     char line[20];
+    static unsigned num_enemy_bullets;
+
+    static SWTimer game_timer;
+
+    static SWTimer pattern_timer, attack_timer;
+
+    static uint8_t j = 0;   // For tracking enemy bullet number
 
     if (disp_p->screen_changed) {   // Only do these when first entering main screen (function)
         // Clear the display
@@ -360,14 +369,64 @@ void GameScreen(HAL* hal_p, display_t* disp_p, game_state_t* game_state_p) {
 
         uint8_t i = 0;  // Tracking row of current line
 
-        // Print Screen name
-        GFX_print(&disp_p->gfx, "GAME", i++, 0);
+        game_state_p->time = 0;
+
+        // Print Initial time
+        snprintf(line, sizeof(line), "Time: %d", game_state_p->time);
+        GFX_print(&disp_p->gfx, line, 0, 0);
 
         // Set foreground color
         GFX_setForeground(&disp_p->gfx, PLAYER_COLOR);
 
         // Draw Player HP circle (HPC)
         GFX_drawSolidCircle(&disp_p->gfx, PLAYER_HPC_X, PLAYER_HPC_Y, HPC_RADIUS);
+
+        // ***** Set the Initial Game State *****
+        // For player
+        game_state_p->player.body.xMin = PLAYER_INIT_XMIN;
+        game_state_p->player.body.xMax = game_state_p->player.body.xMin + CHARACTER_LENGTH;
+        game_state_p->player.body.yMin = PLAYER_INIT_YMIN;
+        game_state_p->player.body.yMax = game_state_p->player.body.yMin + CHARACTER_LENGTH;
+
+        game_state_p->player.color = PLAYER_COLOR;
+        game_state_p->player.HP = PLAYER_INIT_HP;
+        game_state_p->player.motion = (motion_t) {true, true, false, true, PLUS, PLUS, CHARACTER_DX, CHARACTER_DY, SWTimer_construct(CHARACTER_REFRESH_MS), CHARACTER_REFRESH_MS};
+
+        // For Enemy
+        game_state_p->enemy.body.xMin = ENEMY_INIT_XMIN;
+        game_state_p->enemy.body.xMax = game_state_p->enemy.body.xMin + CHARACTER_LENGTH;
+        game_state_p->enemy.body.yMin = ENEMY_INIT_YMIN;
+        game_state_p->enemy.body.yMax = game_state_p->enemy.body.yMin + CHARACTER_LENGTH;
+
+        game_state_p->enemy.color = ENEMY_COLOR;
+        game_state_p->enemy.HP = ENEMY_INIT_HP;
+        game_state_p->enemy.motion = (motion_t) {true, true, false, true, ZERO, ZERO, CHARACTER_DX, CHARACTER_DY, SWTimer_construct(CHARACTER_REFRESH_MS), CHARACTER_REFRESH_MS};
+
+        
+        // For player bullets
+        for (i = 0; i < MAX_PLAYER_BULLETS; i++) {
+            game_state_p->player_bullet[i].motion = (motion_t) {false, false, false, true, MINUS, ZERO, PROJECTILE_DX, PROJECTILE_DY, SWTimer_construct(PROJECTILE_REFRESH_MS), PROJECTILE_REFRESH_MS};
+        }
+
+        // For enemy bullets
+        for (i = 0; i < MAX_ENEMY_BULLETS; i++) {
+            game_state_p->enemy_bullet[i].motion = (motion_t) {false, false, false, true, PLUS, ZERO, PROJECTILE_DX, PROJECTILE_DY, SWTimer_construct(PROJECTILE_REFRESH_MS), PROJECTILE_REFRESH_MS};
+        }
+
+        // Initial enemy attack pattern
+        game_state_p->enemy_pattern = VERTICAL;
+        num_enemy_bullets = GRID_Y_RANGE / ENEMY_BULLET_SPACING;
+
+        // Construct and start game timer
+        game_timer = SWTimer_construct(GAME_TIMER_MS);
+        SWTimer_start(&game_timer);
+
+        // Construct and start timers for enemy's attacks
+        pattern_timer = SWTimer_construct(ENEMY_MID_PATTERN_MS);
+        attack_timer = SWTimer_construct(ENEMY_MID_ATTACK_MS);
+
+        SWTimer_start(&pattern_timer);
+        SWTimer_start(&attack_timer);
 
         // Start the player's motion timer
         SWTimer_start(&game_state_p->player.motion.mTimer);
@@ -378,34 +437,27 @@ void GameScreen(HAL* hal_p, display_t* disp_p, game_state_t* game_state_p) {
     }
 
 
-    if (disp_p->redraw) {
-        // Set foreground color
-        GFX_setForeground(&disp_p->gfx, TEXT_COLOR);
-
-        // Player HP Text
-        snprintf(line, sizeof(line), "%d", game_state_p->player.HP);
-        // GFX_print(&disp_p->gfx, line, PLAYER_HPTEXT_X, PLAYER_HPTEXT_Y);
-        Graphics_drawString(&disp_p->gfx.context, line, -1, PLAYER_HPTEXT_X, PLAYER_HPTEXT_Y, OPAQUE_TEXT);
-
-        // Enemy HP Text
-        snprintf(line, sizeof(line), "%d", game_state_p->enemy.HP);
-        // GFX_print(&disp_p->gfx, line, ENEMY_HPTEXT_X, ENEMY_HPTEXT_Y);
-        Graphics_drawString(&disp_p->gfx.context, line, -1, ENEMY_HPTEXT_X, ENEMY_HPTEXT_Y, OPAQUE_TEXT);
-
-        disp_p->redraw = false;
-    }
-
     // Move the player
     GFX_setForeground(&disp_p->gfx, game_state_p->player.color);
     MoveRectangle(hal_p, disp_p, &game_state_p->player.body, &game_state_p->player.motion);
 
-    // Move the bullets
+    // Move the player bullets
     uint8_t i;
     for (i = 0; i < MAX_PLAYER_BULLETS; i++) {
-        MoveRectangle(hal_p, disp_p, &game_state_p->player_bullet[i].body, &game_state_p->player_bullet[i].motion);
+        if (game_state_p->player_bullet[i].motion.exists) {
+            // If the bullet collides with enemy, make bullet disappear and reduce enemy HP
+            if (IsOverlap(&game_state_p->player_bullet[i].body, &game_state_p->enemy.body)) {
+                game_state_p->player_bullet[i].motion.exists = false;
+                game_state_p->enemy.HP -= PROJECTILE_DAMAGE;
+
+                disp_p->redraw = true;
+            }
+
+            MoveRectangle(hal_p, disp_p, &game_state_p->player_bullet[i].body, &game_state_p->player_bullet[i].motion);
+        }
     }
 
-    // Logic for shooting bullets
+    // Logic for shooting (player) bullets
     if (Button_isTapped(&hal_p->boosterpackS1)) {
         for (i = 0; i < MAX_PLAYER_BULLETS; i++) {
             if (!game_state_p->player_bullet[i].motion.exists) {
@@ -420,5 +472,148 @@ void GameScreen(HAL* hal_p, display_t* disp_p, game_state_t* game_state_p) {
                 break;
             }
         }
+    }
+
+
+    // TODO: Move the enemy
+    GFX_setForeground(&disp_p->gfx, game_state_p->enemy.color);
+    MoveRectangle(hal_p, disp_p, &game_state_p->enemy.body, &game_state_p->enemy.motion);
+
+    // Move the enemy bullets
+    for (i = 0; i < num_enemy_bullets; i++) {
+        if (game_state_p->enemy_bullet[i].motion.exists) {
+            // If the bullet collides with player, make bullet disappear and reduce player HP
+            if (IsOverlap(&game_state_p->enemy_bullet[i].body, &game_state_p->player.body)) {
+                game_state_p->enemy_bullet[i].motion.exists = false;
+                game_state_p->player.HP -= PROJECTILE_DAMAGE;
+
+                disp_p->redraw = true;
+            }
+
+            MoveRectangle(hal_p, disp_p, &game_state_p->enemy_bullet[i].body, &game_state_p->enemy_bullet[i].motion);
+        }
+    }
+
+    // Logic for creating enemy bullets
+    if (SWTimer_expired(&pattern_timer)) {
+        if (SWTimer_expired(&attack_timer) && j < num_enemy_bullets) {
+            // Bullet now exists
+            game_state_p->enemy_bullet[j].motion.exists = true;
+
+            // Set its position
+            switch (game_state_p->enemy_pattern)
+            {
+                case VERTICAL:
+                    game_state_p->enemy_bullet[j].body.xMin = GRID_X_START + (j + 1) * ENEMY_BULLET_SPACING;
+                    game_state_p->enemy_bullet[j].body.xMax = game_state_p->enemy_bullet[j].body.xMin + PROJECTILE_WIDTH;
+                    game_state_p->enemy_bullet[j].body.yMin = GRID_Y_START;
+                    game_state_p->enemy_bullet[j].body.yMax = game_state_p->enemy_bullet[j].body.yMin + PROJECTILE_LENGTH;
+                    break;
+
+                case HORIZONTAL:
+                    game_state_p->enemy_bullet[j].body.xMin = GRID_X_START;
+                    game_state_p->enemy_bullet[j].body.xMax = game_state_p->enemy_bullet[j].body.xMin + PROJECTILE_LENGTH;
+                    game_state_p->enemy_bullet[j].body.yMin = GRID_Y_START + (j + 1) * ENEMY_BULLET_SPACING;
+                    game_state_p->enemy_bullet[j].body.yMax = game_state_p->enemy_bullet[j].body.yMin + PROJECTILE_WIDTH;
+                    break;
+                
+                default:
+                    break;
+            }
+
+            SWTimer_start(&game_state_p->enemy_bullet[j].motion.mTimer);        // Start the bullet's motion timer
+
+            j++;                                // Move to next bullet
+            SWTimer_start(&attack_timer);       // Restart attack timer
+        }
+
+        if (j == num_enemy_bullets) {
+            j = 0;      // Restart bullet count
+
+            game_state_p->enemy_pattern = CircularIncrement(game_state_p->enemy_pattern, NUM_PATTERNS);     // Move to the next pattern
+
+            switch (game_state_p->enemy_pattern)
+            {
+                case VERTICAL:
+                    for (i = 0; i <= num_enemy_bullets; i++) {
+                        game_state_p->enemy_bullet[i].motion.left_right = ZERO;
+                        game_state_p->enemy_bullet[i].motion.up_down = PLUS;
+                    }
+                    num_enemy_bullets = GRID_X_RANGE / ENEMY_BULLET_SPACING;
+                    break;
+
+                case HORIZONTAL:
+                    for (i = 0; i <= num_enemy_bullets; i++) {
+                        game_state_p->enemy_bullet[i].motion.left_right = PLUS;
+                        game_state_p->enemy_bullet[i].motion.up_down = ZERO;
+                    }
+                    num_enemy_bullets = GRID_Y_RANGE / ENEMY_BULLET_SPACING;
+                    break;
+                
+                default:
+                    break;
+            }
+
+            SWTimer_start(&pattern_timer);       // Restart pattern timer
+        }
+    }
+
+    if (SWTimer_expired(&game_timer)) {
+        game_state_p->time++;
+        snprintf(line, sizeof(line), "Time: %d", game_state_p->time);
+        GFX_print(&disp_p->gfx, line, 0, 0);
+
+        SWTimer_start(&game_timer);
+    }
+
+    if (disp_p->redraw) {
+        // Set foreground color
+        GFX_setForeground(&disp_p->gfx, TEXT_COLOR);
+
+        // Player HP Text
+        snprintf(line, sizeof(line), "%d", max(0, game_state_p->player.HP));
+        // GFX_print(&disp_p->gfx, line, PLAYER_HPTEXT_X, PLAYER_HPTEXT_Y);
+        Graphics_drawString(&disp_p->gfx.context, line, -1, PLAYER_HPTEXT_X, PLAYER_HPTEXT_Y, OPAQUE_TEXT);
+
+        // Enemy HP Text
+        snprintf(line, sizeof(line), "%d", max(0, game_state_p->enemy.HP));
+        // GFX_print(&disp_p->gfx, line, ENEMY_HPTEXT_X, ENEMY_HPTEXT_Y);
+        Graphics_drawString(&disp_p->gfx.context, line, -1, ENEMY_HPTEXT_X, ENEMY_HPTEXT_Y, OPAQUE_TEXT);
+
+        disp_p->redraw = false;
+    }
+
+    // Condition for Game Over
+    if (game_state_p->player.HP <= 0 || game_state_p->enemy.HP <= 0) {
+        disp_p->screen = GAMEOVER;
+        disp_p->screen_changed = true;
+    }
+    
+}
+
+
+// Game Over Screen
+void GameOverScreen(HAL* hal_p, display_t* disp_p, game_state_t* game_state_p) {
+    if (disp_p->screen_changed) {   // Only do these when first entering main screen (function)
+        // Set foreground color
+        GFX_setForeground(&disp_p->gfx, TEXT_COLOR);
+
+        // uint8_t i = 1;
+        // Print Winner message
+        if (game_state_p->player.HP <= 0)
+            GFX_print(&disp_p->gfx, "You LOSE :X", 5, 4);
+        else
+            GFX_print(&disp_p->gfx, "You WIN =)", 5, 4);
+        // i += MIN_SECTION_GAP_ROWS;
+
+        GFX_print(&disp_p->gfx, "Press JSB to continue", 10, 4);
+
+        // Set flags to stay on this screen
+        disp_p->screen_changed = false;
+    }
+
+    if (Button_isTapped(&hal_p->boosterpackJS)) {
+        disp_p->screen = MAIN;
+        disp_p->screen_changed = true;
     }
 }
