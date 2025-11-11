@@ -38,20 +38,20 @@ void MoveRectangle(HAL* hal_p, display_t* disp_p, Graphics_Rectangle* R, motion_
                         if (motion_p->stay) {
                             if (R->xMin < Grid.xMin) {
                                 R->xMin += motion_p->dx; R->xMax += motion_p->dx;
-                                motion_p->left_right = 1;
+                                motion_p->left_right = PLUS;
                             }
                             else if (R->xMax > Grid.xMax) {
                                 R->xMin -= motion_p->dx; R->xMax -= motion_p->dx;
-                                motion_p->left_right = -1;
+                                motion_p->left_right = MINUS;
                             }
 
                             if (R->yMin < Grid.yMin) {
                                 R->yMin += motion_p->dy; R->yMax += motion_p->dy;
-                                motion_p->up_down = 1;
+                                motion_p->up_down = PLUS;
                             }
                             else if (R->yMax > Grid.yMax) {
                                 R->yMin -= motion_p->dy; R->yMax -= motion_p->dy;
-                                motion_p->up_down = -1;
+                                motion_p->up_down = MINUS;
                             }
                         }
 
@@ -373,13 +373,16 @@ void GameScreen(HAL* hal_p, display_t* disp_p, game_state_t* game_state_p) {
 
         // Print Initial time
         snprintf(line, sizeof(line), "Time: %d", game_state_p->time);
-        GFX_print(&disp_p->gfx, line, 0, 0);
-
-        // Set foreground color
-        GFX_setForeground(&disp_p->gfx, PLAYER_COLOR);
+        GFX_print(&disp_p->gfx, line, 1, 0);
 
         // Draw Player HP circle (HPC)
+        GFX_setForeground(&disp_p->gfx, PLAYER_COLOR);
         GFX_drawSolidCircle(&disp_p->gfx, PLAYER_HPC_X, PLAYER_HPC_Y, HPC_RADIUS);
+
+        // Draw Enemy HP circle (HPC)
+        GFX_setForeground(&disp_p->gfx, ENEMY_COLOR);
+        GFX_drawSolidCircle(&disp_p->gfx, ENEMY_HPC_X, ENEMY_HPC_Y, HPC_RADIUS);
+
 
         // ***** Set the Initial Game State *****
         // For player
@@ -422,14 +425,15 @@ void GameScreen(HAL* hal_p, display_t* disp_p, game_state_t* game_state_p) {
         SWTimer_start(&game_timer);
 
         // Construct and start timers for enemy's attacks
-        pattern_timer = SWTimer_construct(ENEMY_MID_PATTERN_MS);
+        pattern_timer = SWTimer_construct(ENEMY_MID_PATTERN_MS + MAX_BULLET_TIME_MS);
         attack_timer = SWTimer_construct(ENEMY_MID_ATTACK_MS);
 
         SWTimer_start(&pattern_timer);
         SWTimer_start(&attack_timer);
 
-        // Start the player's motion timer
+        // Start the player's and enemy's motion timer
         SWTimer_start(&game_state_p->player.motion.mTimer);
+        SWTimer_start(&game_state_p->enemy.motion.mTimer);
 
         // Set flags to stay on this screen
         disp_p->screen_changed = false;
@@ -448,6 +452,7 @@ void GameScreen(HAL* hal_p, display_t* disp_p, game_state_t* game_state_p) {
             // If the bullet collides with enemy, make bullet disappear and reduce enemy HP
             if (IsOverlap(&game_state_p->player_bullet[i].body, &game_state_p->enemy.body)) {
                 game_state_p->player_bullet[i].motion.exists = false;
+                GFX_removeSolidSquare(&disp_p->gfx, &game_state_p->player_bullet[i].body);
                 game_state_p->enemy.HP -= PROJECTILE_DAMAGE;
 
                 disp_p->redraw = true;
@@ -485,6 +490,7 @@ void GameScreen(HAL* hal_p, display_t* disp_p, game_state_t* game_state_p) {
             // If the bullet collides with player, make bullet disappear and reduce player HP
             if (IsOverlap(&game_state_p->enemy_bullet[i].body, &game_state_p->player.body)) {
                 game_state_p->enemy_bullet[i].motion.exists = false;
+                GFX_removeSolidSquare(&disp_p->gfx, &game_state_p->enemy_bullet[i].body);
                 game_state_p->player.HP -= PROJECTILE_DAMAGE;
 
                 disp_p->redraw = true;
@@ -504,7 +510,7 @@ void GameScreen(HAL* hal_p, display_t* disp_p, game_state_t* game_state_p) {
             switch (game_state_p->enemy_pattern)
             {
                 case VERTICAL:
-                    game_state_p->enemy_bullet[j].body.xMin = GRID_X_START + (j + 1) * ENEMY_BULLET_SPACING;
+                    game_state_p->enemy_bullet[j].body.xMin = GRID_X_START + j * ENEMY_BULLET_SPACING;
                     game_state_p->enemy_bullet[j].body.xMax = game_state_p->enemy_bullet[j].body.xMin + PROJECTILE_WIDTH;
                     game_state_p->enemy_bullet[j].body.yMin = GRID_Y_START;
                     game_state_p->enemy_bullet[j].body.yMax = game_state_p->enemy_bullet[j].body.yMin + PROJECTILE_LENGTH;
@@ -513,7 +519,7 @@ void GameScreen(HAL* hal_p, display_t* disp_p, game_state_t* game_state_p) {
                 case HORIZONTAL:
                     game_state_p->enemy_bullet[j].body.xMin = GRID_X_START;
                     game_state_p->enemy_bullet[j].body.xMax = game_state_p->enemy_bullet[j].body.xMin + PROJECTILE_LENGTH;
-                    game_state_p->enemy_bullet[j].body.yMin = GRID_Y_START + (j + 1) * ENEMY_BULLET_SPACING;
+                    game_state_p->enemy_bullet[j].body.yMin = GRID_Y_START + j * ENEMY_BULLET_SPACING;
                     game_state_p->enemy_bullet[j].body.yMax = game_state_p->enemy_bullet[j].body.yMin + PROJECTILE_WIDTH;
                     break;
                 
@@ -535,7 +541,9 @@ void GameScreen(HAL* hal_p, display_t* disp_p, game_state_t* game_state_p) {
             switch (game_state_p->enemy_pattern)
             {
                 case VERTICAL:
-                    for (i = 0; i <= num_enemy_bullets; i++) {
+                    for (i = 0; i < MAX_ENEMY_BULLETS; i++) {
+                        game_state_p->enemy_bullet[i].motion.exists = false;
+
                         game_state_p->enemy_bullet[i].motion.left_right = ZERO;
                         game_state_p->enemy_bullet[i].motion.up_down = PLUS;
                     }
@@ -543,7 +551,9 @@ void GameScreen(HAL* hal_p, display_t* disp_p, game_state_t* game_state_p) {
                     break;
 
                 case HORIZONTAL:
-                    for (i = 0; i <= num_enemy_bullets; i++) {
+                    for (i = 0; i < MAX_ENEMY_BULLETS; i++) {
+                        game_state_p->enemy_bullet[i].motion.exists = false;
+
                         game_state_p->enemy_bullet[i].motion.left_right = PLUS;
                         game_state_p->enemy_bullet[i].motion.up_down = ZERO;
                     }
@@ -560,23 +570,35 @@ void GameScreen(HAL* hal_p, display_t* disp_p, game_state_t* game_state_p) {
 
     if (SWTimer_expired(&game_timer)) {
         game_state_p->time++;
+
+        // Set foreground color
+        GFX_setForeground(&disp_p->gfx, TEXT_COLOR);
+
         snprintf(line, sizeof(line), "Time: %d", game_state_p->time);
-        GFX_print(&disp_p->gfx, line, 0, 0);
+        GFX_print(&disp_p->gfx, line, 1, 0);
 
         SWTimer_start(&game_timer);
     }
 
     if (disp_p->redraw) {
+        // Draw Player HP circle (HPC)
+        GFX_setForeground(&disp_p->gfx, PLAYER_COLOR);
+        GFX_drawSolidCircle(&disp_p->gfx, PLAYER_HPC_X, PLAYER_HPC_Y, HPC_RADIUS);
+
+        // Draw Enemy HP circle (HPC)
+        GFX_setForeground(&disp_p->gfx, ENEMY_COLOR);
+        GFX_drawSolidCircle(&disp_p->gfx, ENEMY_HPC_X, ENEMY_HPC_Y, HPC_RADIUS);
+
         // Set foreground color
         GFX_setForeground(&disp_p->gfx, TEXT_COLOR);
 
         // Player HP Text
-        snprintf(line, sizeof(line), "%d", max(0, game_state_p->player.HP));
+        snprintf(line, sizeof(line), "%3d", max(0, game_state_p->player.HP));
         // GFX_print(&disp_p->gfx, line, PLAYER_HPTEXT_X, PLAYER_HPTEXT_Y);
         Graphics_drawString(&disp_p->gfx.context, line, -1, PLAYER_HPTEXT_X, PLAYER_HPTEXT_Y, OPAQUE_TEXT);
 
         // Enemy HP Text
-        snprintf(line, sizeof(line), "%d", max(0, game_state_p->enemy.HP));
+        snprintf(line, sizeof(line), "%3d", max(0, game_state_p->enemy.HP));
         // GFX_print(&disp_p->gfx, line, ENEMY_HPTEXT_X, ENEMY_HPTEXT_Y);
         Graphics_drawString(&disp_p->gfx.context, line, -1, ENEMY_HPTEXT_X, ENEMY_HPTEXT_Y, OPAQUE_TEXT);
 
@@ -601,12 +623,12 @@ void GameOverScreen(HAL* hal_p, display_t* disp_p, game_state_t* game_state_p) {
         // uint8_t i = 1;
         // Print Winner message
         if (game_state_p->player.HP <= 0)
-            GFX_print(&disp_p->gfx, "You LOSE :X", 5, 4);
+            GFX_print(&disp_p->gfx, " You LOSE :X", 6, 4);
         else
-            GFX_print(&disp_p->gfx, "You WIN =)", 5, 4);
+            GFX_print(&disp_p->gfx, " You WIN =)", 6, 4);
         // i += MIN_SECTION_GAP_ROWS;
 
-        GFX_print(&disp_p->gfx, "Press JSB to continue", 10, 4);
+        GFX_print(&disp_p->gfx, "Press JSB to continue", 12, 0);
 
         // Set flags to stay on this screen
         disp_p->screen_changed = false;
