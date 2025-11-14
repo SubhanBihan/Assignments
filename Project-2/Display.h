@@ -2,7 +2,7 @@
 #define DISPLAY_H_
 
 #include <HAL/HAL.h>
-#include "HAL_ADC.h"
+#include <HAL/HAL_ADC.h>
 #include <stdlib.h>
 #include <math.h>
 
@@ -47,24 +47,40 @@
 
 // Player
 #define PLAYER_COLOR GRAPHICS_COLOR_AQUA
+#define PLAYER_POWER_COLOR GRAPHICS_COLOR_GREEN
+#define PLAYER_POWER_INTERVAL 2000      // 20s
+#define PLAYER_POWER_DURATION_MS 5000   // 5s
+#define PLAYER_HPBAR_XMIN 5
+#define PLAYER_HPBAR_XMAX (GRID_X_START - 5)
+#define PLAYER_HPBAR_YMIN 20
+#define PLAYER_HPBAR_YMAX 100
+#define PLAYER_HPBAR_YRANGE (PLAYER_HPBAR_YMAX - PLAYER_HPBAR_YMIN)
 #define PLAYER_HPC_X (GRID_X_START - HPC_RADIUS)
 #define PLAYER_HPC_Y (GRID_Y_END - HPC_RADIUS)
 #define PLAYER_HPTEXT_X 0
 #define PLAYER_HPTEXT_Y (PLAYER_HPC_Y - 3)
-#define PLAYER_INIT_HP 100
+#define PLAYER_INIT_HP 25
 #define PLAYER_INIT_XMIN 59
 #define PLAYER_INIT_YMIN 59
 #define MAX_PLAYER_BULLETS 5
 
 // Enemy
 #define ENEMY_COLOR GRAPHICS_COLOR_RED
+#define ENEMY_POWER_COLOR GRAPHICS_COLOR_ORANGE
+#define ENEMY_POWER_HP (0.2 * ENEMY_INIT_HP)
+#define ENEMY_POWER_DAMAGE 2
+#define ENEMY_HPBAR_XMIN (GRID_X_END + 5)
+#define ENEMY_HPBAR_XMAX 122
+#define ENEMY_HPBAR_YMIN 30
+#define ENEMY_HPBAR_YMAX 110
+#define ENEMY_HPBAR_YRANGE (ENEMY_HPBAR_YMAX - ENEMY_HPBAR_YMIN)
 #define ENEMY_HPC_X (GRID_X_END + HPC_RADIUS)
 #define ENEMY_HPC_Y (GRID_Y_START + HPC_RADIUS)
 #define ENEMY_HPTEXT_X (GRID_X_END + 2)
 #define ENEMY_HPTEXT_Y (ENEMY_HPC_Y - 3)
-#define ENEMY_INIT_HP 500
+#define ENEMY_INIT_HP 25
 #define ENEMY_INIT_XMIN 59
-#define ENEMY_INIT_YMIN 15
+#define ENEMY_INIT_YMIN 30
 #define MAX_ENEMY_BULLETS 80
 #define ENEMY_BULLET_SPACING 4
 #define ENEMY_MID_PATTERN_MS 1000
@@ -81,9 +97,9 @@
 
 // typedef enum {BLACK, WHITE, RED, ORANGE, YELLOW, BLUE, GREEN} color_t;
 
-typedef enum {TITLE, MAIN, INSTRUCTIONS, HS, GAME, GAMEOVER} screen_t;
+typedef enum {TITLE, MAIN, INSTRUCTIONS, HS, GAME, RESUME, GAMEOVER} screen_t;
 
-typedef enum {OPTION_ONE, OPTION_TWO, OPTION_THREE, NUM_OPTIONS} option_t;
+typedef enum {OPTION_ONE, OPTION_TWO, OPTION_THREE, OPTION_FOUR, NUM_OPTIONS} option_t;
 
 typedef enum {MINUS = -1, ZERO, PLUS} direction_t;
 
@@ -115,6 +131,7 @@ typedef struct {
 } character_t;
 
 typedef struct {
+    // The projectile is a line, and (xmin, ymin) = (x1, y1), (xmax, ymax) = (x2, y2)
     Graphics_Rectangle body;
     motion_t motion;
 } projectile_t;
@@ -128,6 +145,7 @@ typedef struct
     uint32_t time;
     uint32_t score;
     uint32_t high_scores[NUM_SCORES];
+    bool new_game;
 } game_state_t;
 
 
@@ -147,8 +165,11 @@ void MovePlayer(HAL* hal_p, display_t* disp_p, Graphics_Rectangle* R, motion_t* 
 void MoveEnemy(display_t* disp_p, Graphics_Rectangle* R, motion_t* motion_p);
 void MoveBullet(display_t* disp_p, Graphics_Rectangle* R, motion_t* motion_p);
 
-// Test for rectangular overlap
-bool IsOverlap(const Graphics_Rectangle* R1, const Graphics_Rectangle* R2);
+// Test for line-rectangle overlap
+bool IsOverlap(const Graphics_Rectangle* Line, const Graphics_Rectangle* Rect);
+
+// Test for a point being inside a rectangle
+bool IsPointInRect(const int16_t x_p, const int16_t y_p, const Graphics_Rectangle* R);
 
 // Test for any edge being at or out of Grid bounds
 bool IsOutOfBounds(const Graphics_Rectangle* R1, const Graphics_Rectangle* Grid);
@@ -172,6 +193,27 @@ void InstructionsScreen(HAL* hal_p, display_t* disp_p);
 
 // High Scores Screen
 void HSScreen(HAL* hal_p, display_t* disp_p, game_state_t* game_state_p);
+
+// Get Number of Enemy bullets for an attack pattern
+unsigned GetNumEnemyBullets(attack_t enemy_pattern);
+
+// Initialise parameters for a new game
+void NewGameInit(display_t* disp_p, game_state_t* game_state_p, unsigned* num_enemy_bullets, SWTimer* game_timer, SWTimer* pattern_timer, SWTimer* attack_timer, bool* player_power, bool* enemy_power, Graphics_Rectangle* player_HPB, Graphics_Rectangle* enemy_HPB, SWTimer* player_power_timer);
+
+// Move the player's bullets
+void MovePlayerBullets(display_t* disp_p, game_state_t* game_state_p, bool enemy_power);
+
+// Logic to shoot a player bullet
+void ShootPlayerBullet(HAL* hal_p, game_state_t* game_state_p);
+
+// Move Enemy bullets
+void MoveEnemyBullets(display_t* disp_p, game_state_t* game_state_p, const unsigned num_enemy_bullets, bool player_power);
+
+// Initialize Single Attack pattern of enemy
+void EnemySinglePattern(game_state_t* game_state_p, unsigned* j);
+
+// Change Enemy attack pattern
+void EnemyChangePattern(display_t* disp_p, game_state_t* game_state_p);
 
 // Game Screen
 void GameScreen(HAL* hal_p, display_t* disp_p, game_state_t* game_state_p);

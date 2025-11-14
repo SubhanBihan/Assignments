@@ -37,8 +37,8 @@ void draw_Base(Graphics_Context *g_sContext_p)
     Graphics_Rectangle R;
     R.xMin = 0;
     R.xMax = 127;
-    R.yMin = 32;
-    R.yMax = 96;
+    R.yMin = 0;
+    R.yMax = 127;
 
     Graphics_drawRectangle(g_sContext_p, &R);
     Graphics_fillCircle(g_sContext_p, 63, 63, 10);
@@ -56,32 +56,7 @@ void make_3digit_NumString(unsigned int num, char *string)
 }
 
 
-void MoveCircle(Graphics_Context *g_sContext_p, bool moveToLeft, bool moveToRight)
-{
-    static unsigned int x = 63;
-    static unsigned int moveCount = 0;
-    char string[4];
 
-    if ((moveToLeft && (x>20)) || (moveToRight && (x<110)))
-    {
-
-        Graphics_setForegroundColor(g_sContext_p, GRAPHICS_COLOR_BLUE);
-        Graphics_fillCircle(g_sContext_p, x, 63, 10);
-
-        if (moveToLeft)
-            x = x-10;
-        else
-            x = x+10;
-
-        Graphics_setForegroundColor(g_sContext_p, GRAPHICS_COLOR_YELLOW);
-        Graphics_fillCircle(g_sContext_p, x, 63, 10);
-
-        moveCount++;
-        make_3digit_NumString(moveCount, string);
-        Graphics_drawString(g_sContext_p, (int8_t *) string, -1, 10, 110, true);
-    }
-
-}
 void InitFonts() {
     Crystalfontz128x128_Init();
     Crystalfontz128x128_SetOrientation(LCD_ORIENTATION_UP);

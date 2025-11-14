@@ -1,4 +1,4 @@
-#include "HAL_ADC.h"
+#include <HAL/HAL_ADC.h>
 
 // Initializing the ADC which resides on SoC
 void initADC() {
@@ -13,9 +13,7 @@ void initADC() {
     // This configures the ADC to store output results
     // in ADC_MEM0 for joystick X.
     // if we want to add joystick Y, then, we have to use more memory locations
-    ADC14_configureMultiSequenceMode(ADC_MEM0, ADC_MEM0, true);
-    // For Y
-    ADC14_configureMultiSequenceMode(ADC_MEM1, ADC_MEM1, true);
+    ADC14_configureMultiSequenceMode(ADC_MEM0, ADC_MEM1, true);
 
     // This configures the ADC in manual conversion mode
     // Software will start each conversion.

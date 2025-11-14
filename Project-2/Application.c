@@ -20,6 +20,11 @@ void ScreenSelect(HAL* hal_p, Application* app_p) {
             break;
         
         case GAME:
+            app_p->game_state.new_game = true;
+            GameScreen(hal_p, &app_p->disp, &app_p->game_state);
+            break;
+
+        case RESUME:
             GameScreen(hal_p, &app_p->disp, &app_p->game_state);
             break;
         
