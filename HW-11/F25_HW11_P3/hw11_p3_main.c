@@ -5,7 +5,7 @@
 // TODO: Put the correct load value for the PWM period in terms of counter
 // cycles based on request PWM frequency,
 //       processor clock source of 3MHz and clock divider chosen in this project
-#define PWM_PERIOD_CYCLES 142
+#define PWM_PERIOD_CYCLES 284
 
 // Duty cycle as a fraction (between 0 and 1)
 #define DUTY_CYCLE_FRACTION 0.5
@@ -25,12 +25,12 @@
 // We need to study the Booster board and Launchpad board diagrams for this
 // info.
 
-// TODO: Set the following values to the correct values for the buzzer
+// TODO: Set the following values to the correct values for the buzzer - Already correct
 #define BUZZER_TIMER TIMER_A0_BASE
 #define BUZZER_CHANNEL TIMER_A_CAPTURECOMPARE_REGISTER_4
 
 void initPWMPins() {
-  // TODO: Set the following values to the correct values for the buzzer
+  // TODO: Set the following values to the correct values for the buzzer - Already correct
   GPIO_setAsOutputPin(GPIO_PORT_P2, GPIO_PIN7);
   GPIO_setOutputLowOnPin(GPIO_PORT_P2, GPIO_PIN7);
   GPIO_setAsPeripheralModuleFunctionOutputPin(GPIO_PORT_P2, GPIO_PIN7,

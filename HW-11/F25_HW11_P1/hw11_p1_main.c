@@ -2,7 +2,7 @@
 
 #include "ButtonLED_HAL.h"
 
-#define TIMER32 1
+// #define TIMER32 1
 
 #ifdef TIMER32
 
@@ -16,7 +16,7 @@
 
 // The duty cycle in fraction form (ratio between On cycles and Total number of
 // cycles)
-#define DUTY_CYCLE_FRACTION 0.9
+#define DUTY_CYCLE_FRACTION 0.2
 
 // The length of on cycles and off cycles in terms of counter cycle
 #define ON_CYCLES (DUTY_CYCLE_FRACTION * PWM_PERIOD_CYCLES)
@@ -24,7 +24,7 @@
 
 typedef enum { ON, OFF } pwm_state_t;
 
-#define BLOCKING 0
+#define BLOCKING 1
 #define BLOCK_COUNT 100000
 
 // This function initializes all the peripherals except graphics
@@ -137,7 +137,7 @@ void initialize() {
 #define PWM_PERIOD_CYCLES ONE_SEC_COUNT
 
 // Duty cycle as a fraction (between 0 and 1)
-#define DUTY_CYCLE_FRACTION 0.8
+#define DUTY_CYCLE_FRACTION 0.2
 
 // The number of on cycles (Timer_A counter cycles)
 #define BLUE_ON_CYCLES (DUTY_CYCLE_FRACTION * PWM_PERIOD_CYCLES)
@@ -159,7 +159,7 @@ void initialize() {
 #define BLU_TIMER TIMER_A2_BASE
 #define BLU_CHANNEL TIMER_A_CAPTURECOMPARE_REGISTER_1
 
-#define BLOCKING 0
+#define BLOCKING 1
 #define BLOCK_COUNT 100000
 
 void initPWMPins() {

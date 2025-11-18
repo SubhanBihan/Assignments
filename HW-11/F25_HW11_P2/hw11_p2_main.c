@@ -5,7 +5,7 @@
 // TODO: Put the correct load value for the PWM period in terms of counter
 // cycles based on request PWM frequency,
 //       processor clock source of 3MHz and clock divider chosen in this project
-#define PWM_PERIOD_CYCLES 0
+#define PWM_PERIOD_CYCLES 1250
 
 // Duty cycle as a fraction (between 0 and 1)
 #define DUTY_CYCLE_FRACTION 1
