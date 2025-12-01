@@ -83,10 +83,11 @@ void getSampleJoyStick(unsigned *X, unsigned *Y) {
 }
 
 void JoyStick_refresh(JoyStick* JS) {
-    getSampleJoyStick(&JS->vx, &JS->vy);
+    unsigned vx, vy;
+    getSampleJoyStick(&vx, &vy);
 
-    JS->inputX = JS->vx < LEFT_THRESHOLD ? LEFT : JS->vx > RIGHT_THRESHOLD ? RIGHT  : CENTERX; 
-    JS->inputY = JS->vy < DOWN_THRESHOLD ? DOWN : JS->vy > UP_THRESHOLD    ? UP     : CENTERY;
+    JS->inputX = vx < LEFT_THRESHOLD ? LEFT : vx > RIGHT_THRESHOLD ? RIGHT  : CENTERX; 
+    JS->inputY = vy < DOWN_THRESHOLD ? DOWN : vy > UP_THRESHOLD    ? UP     : CENTERY;
 
     JS->TappedX = CENTERX;
 

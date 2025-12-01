@@ -22,7 +22,7 @@ typedef enum {LEFT = -1, CENTERX, RIGHT} DirectionX_t;
 typedef enum {DOWN = -1, CENTERY, UP}    DirectionY_t;
 
 typedef struct {
-  unsigned vx, vy;
+  // unsigned vx, vy;
 
   // Keeps track of FSM progress in the Debouncing FSM
   DirectionX_t StateX, inputX;
