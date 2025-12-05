@@ -85,17 +85,31 @@ void MainScreen(HAL* hal_p, display_t* disp_p) {
         option_num = OPTION_ONE;
     }
 
-    // Move cursor up
-    if (hal_p->JS.TappedY == UP) {
-        // prev_option = option_num;
-        option_num = CircularDecrement(option_num, NUM_OPTIONS);
-        disp_p->redraw = true;
-    }
+    // // Move cursor up
+    // if (hal_p->JS.TappedY == UP) {
+    //     // prev_option = option_num;
+    //     option_num = CircularDecrement(option_num, NUM_OPTIONS);
+    //     disp_p->redraw = true;
+    // }
 
-    // Move cursor down
-    if (hal_p->JS.TappedY == DOWN) {
-        // prev_option = option_num;
-        option_num = CircularIncrement(option_num, NUM_OPTIONS);
+    // // Move cursor down
+    // if (hal_p->JS.TappedY == DOWN) {
+    //     // prev_option = option_num;
+    //     option_num = CircularIncrement(option_num, NUM_OPTIONS);
+    //     disp_p->redraw = true;
+    // }
+
+    // Move cursor/arrow
+    if (hal_p->JS.TappedY != CENTERY) {
+        switch (hal_p->JS.TappedY) {
+            case UP:
+                option_num = CircularDecrement(option_num, NUM_OPTIONS);
+                break;
+            case DOWN:
+                option_num = CircularIncrement(option_num, NUM_OPTIONS);
+                break;
+        }
+
         disp_p->redraw = true;
     }
 
