@@ -25,7 +25,7 @@
 // TODO: Set the following values to the correct values for the pwm
 #define PWM_CLKSOURCE               TIMER_A_CLOCKSOURCE_SMCLK
 #define PWM_CLKSOURCE_DIVIDER       TIMER_A_CLOCKSOURCE_DIVIDER_24
-#define PWM_COMPARE_OUTPUT_MODE     TIMER_A_OUTPUTMODE_SET_RESET
+#define PWM_COMPARE_OUTPUT_MODE     TIMER_A_OUTPUTMODE_RESET_SET
 #define PWM_COMPARE_REGISTER        BUZZER_CHANNEL
 
 typedef struct {
@@ -41,7 +41,7 @@ note_t Note_Construct(float frequency_hz, uint32_t duration_ms, float duty_cycle
 
 void Buzzer_Init();
 
-void Buzzer_Play(note_t* note, SWTimer* buzzer_timer);
+void Buzzer_Play(note_t* note);
 
 void Buzzer_Stop();
 

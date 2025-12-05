@@ -85,7 +85,7 @@ int main(void) {
   Timer_A_PWMConfig pwmConfig_red;
   pwmConfig_red.clockSource =
       TIMER_A_CLOCKSOURCE_SMCLK;  // The source clock is the system clock (3MHz)
-  pwmConfig_red.clockSourceDivider = TIMER_A_CLOCKSOURCE_DIVIDER_24;
+  pwmConfig_red.clockSourceDivider = TIMER_A_CLOCKSOURCE_DIVIDER_7;
   pwmConfig_red.compareOutputMode =
       TIMER_A_OUTPUTMODE_SET_RESET;  // The OC mode. We choose this such that we
                                      // can achieve the waveform we are

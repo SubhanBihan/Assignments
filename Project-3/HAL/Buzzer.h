@@ -11,19 +11,22 @@
 #include <ti/devices/msp432p4xx/driverlib/driverlib.h>
 
 #include "HAL/pitches.h"
+#include "HAL/Timer.h"
 
 // TODO: Set the following values to the correct values for the buzzer
-#define BUZZER_PORT                 1
-#define BUZZER_PIN                  1
+#define BUZZER_PORT                 GPIO_PORT_P2
+#define BUZZER_PIN                  GPIO_PIN7
 
-#define BUZZER_TIMER                1
-#define BUZZER_CHANNEL              1
+#define BUZZER_TIMER                TIMER_A0_BASE
+#define BUZZER_CHANNEL              TIMER_A_CAPTURECOMPARE_REGISTER_4
+
+// #define BUZZER_DUTY_CYCLE_FRACTION 0.5
 
 // TODO: Set the following values to the correct values for the pwm
-#define PWM_CLKSOURCE               1
-#define PWM_CLKSOURCE_DIVIDER       1
-#define PWM_COMPARE_OUTPUT_MODE     1
-#define PWM_COMPARE_REGISTER        1
+#define PWM_CLKSOURCE               TIMER_A_CLOCKSOURCE_SMCLK
+#define PWM_CLKSOURCE_DIVIDER       TIMER_A_CLOCKSOURCE_DIVIDER_24
+#define PWM_COMPARE_OUTPUT_MODE     TIMER_A_OUTPUTMODE_RESET_SET
+#define PWM_COMPARE_REGISTER        BUZZER_CHANNEL
 
 typedef struct {
     float frequency_hz;

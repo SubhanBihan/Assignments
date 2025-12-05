@@ -6,15 +6,12 @@
 struct _Application {
   game_state_t game_state;
   display_t disp;
-//   uint32_t counter;
 };
 
 typedef struct _Application Application;
 
 /**
  * Selects screen (Main, Game, HS, etc.)
- *
- * @param g_sContext_p: LCD graphics context pointer
  * @param app_p: Application struct object Pointer 
  * @param hal_p: HAL struct object Pointer 
  */

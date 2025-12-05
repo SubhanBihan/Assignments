@@ -11,9 +11,8 @@
 
 // #include "HAL/Button.h"
 #include "HAL/HAL_ADC.h"
-#include "HAL/LED.h"
+#include "HAL/Button.h"
 #include "HAL/Graphics.h"
-#include "HAL/Timer.h"
 #include "HAL/Buzzer.h"
 #include "HAL/TimerA.h"
 // #include <HAL/UART.h>
@@ -33,27 +32,8 @@
  * which interface with the hardware on the MSP432.
  */
 struct _HAL {
-  // LEDs - Left Launchpad LED (the LED is only a single color - red)
-  LED launchpadLED1;
-
-  // LEDs - Right Launchpad LEDs (one LED struct for red, one for blue, etc.)
-  LED launchpadLED2Red;
-  LED launchpadLED2Blue;
-  LED launchpadLED2Green;
-
-  // LEDs - Boosterpack LED (one LED struct for red, one for blue, etc.)
-  LED boosterpackRed;
-  LED boosterpackBlue;
-  LED boosterpackGreen;
-
-  // Buttons - Launchpad S1 and S2
-  Button launchpadS1;
-  Button launchpadS2;
-
-  // Buttons - Boosterpack S1, S2, and JS (press down on the joystick)
-  Button boosterpackS1;
-  Button boosterpackS2;
-  Button boosterpackJS;
+  // Buttons
+  buttons_t buttons;
 
   // Joystick
   JoyStick JS;
@@ -67,9 +47,9 @@ struct _HAL {
 typedef struct _HAL HAL;
 
 // Constructs an HAL object by calling the constructor of each individual member
-void HAL_construct(HAL* hal);
+void HAL_construct(HAL* hal_p);
 
 // Refreshes all necessary inputs in the HAL
-void HAL_refresh(HAL* api);
+void HAL_refresh(HAL* hal_p);
 
 #endif /* HAL_HAL_H_ */

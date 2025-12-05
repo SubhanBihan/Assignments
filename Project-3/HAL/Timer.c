@@ -5,7 +5,8 @@
  *      Author: Matthew Zhong
  */
 
-#include <HAL/Timer.h>
+ 
+#include "HAL/Timer.h"
 
 /** The reference counter which tracks how many rollovers have occurred. Used in
  * timing SWTimers. */

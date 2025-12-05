@@ -2,7 +2,7 @@
 #define HAL_ADC_H_
 
 #include <ti/devices/msp432p4xx/driverlib/driverlib.h>
-#include "HAL/Button.h"
+// #include "HAL/Button.h"
 
 #define JOYSTICK_X_CENTER 7900
 #define JOYSTICK_Y_CENTER 8300
@@ -25,11 +25,11 @@ typedef struct {
   // unsigned vx, vy;
 
   // Keeps track of FSM progress in the Debouncing FSM
-  DirectionX_t StateX, inputX;
-  DirectionY_t StateY, inputY;
+  DirectionX_t StateX;
+  DirectionY_t StateY;
 
-  // The timer which is used to wait out a bouncy input
-  SWTimer timerX, timerY;
+  // // The timer which is used to wait out a bouncy input
+  // SWTimer timerX, timerY;
 
   // The outputs of the FSM.
   DirectionX_t PushedX, TappedX;

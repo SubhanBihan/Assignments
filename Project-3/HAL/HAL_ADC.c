@@ -63,8 +63,8 @@ void initJoyStick(JoyStick* JS) {
 
     JS->StateX = CENTERX;
     JS->StateY = CENTERY;
-    JS->timerX = SWTimer_construct(DEBOUNCE_TIME_MS);   // These wait times might need to be changed (increased)
-    JS->timerY = SWTimer_construct(DEBOUNCE_TIME_MS);
+    // JS->timerX = SWTimer_construct(DEBOUNCE_TIME_MS);   // These wait times might need to be changed (increased)
+    // JS->timerY = SWTimer_construct(DEBOUNCE_TIME_MS);
 
     // Timer Starting needed here...?
 
@@ -86,28 +86,36 @@ void JoyStick_refresh(JoyStick* JS) {
     unsigned vx, vy;
     getSampleJoyStick(&vx, &vy);
 
-    JS->inputX = vx < LEFT_THRESHOLD ? LEFT : vx > RIGHT_THRESHOLD ? RIGHT  : CENTERX; 
-    JS->inputY = vy < DOWN_THRESHOLD ? DOWN : vy > UP_THRESHOLD    ? UP     : CENTERY;
+    JS->PushedX = vx < LEFT_THRESHOLD ? LEFT : vx > RIGHT_THRESHOLD ? RIGHT  : CENTERX; 
+    JS->PushedY = vy < DOWN_THRESHOLD ? DOWN : vy > UP_THRESHOLD    ? UP     : CENTERY;
 
     JS->TappedX = CENTERX;
 
-    if (JS->inputX == JS->StateX) 
-        SWTimer_start(&JS->timerX);
+    // if (JS->PushedX == JS->StateX) 
+    //     SWTimer_start(&JS->timerX);
     
-    if (SWTimer_expired(&JS->timerX)) {
-        JS->StateX = JS->inputX;
-        JS->PushedX = JS->inputX;
-        JS->TappedX = JS->inputX;
+    // if (SWTimer_expired(&JS->timerX)) {
+    //     JS->StateX = JS->PushedX;
+    //     JS->TappedX = JS->PushedX;
+    // }
+
+    if (JS->PushedX != JS->StateX) {
+        JS->StateX = JS->PushedX;
+        JS->TappedX = JS->PushedX;
     }
 
     JS->TappedY = CENTERY;
 
-    if (JS->inputY == JS->StateY) 
-        SWTimer_start(&JS->timerY);
+    // if (JS->PushedY == JS->StateY) 
+    //     SWTimer_start(&JS->timerY);
     
-    if (SWTimer_expired(&JS->timerY)) {
-        JS->StateY = JS->inputY;
-        JS->PushedY = JS->inputY;
-        JS->TappedY = JS->inputY;
+    // if (SWTimer_expired(&JS->timerY)) {
+    //     JS->StateY = JS->PushedY;
+    //     JS->TappedY = JS->PushedY;
+    // }
+
+    if (JS->PushedY != JS->StateY) {
+        JS->StateY = JS->PushedY;
+        JS->TappedY = JS->PushedY;
     }
 }

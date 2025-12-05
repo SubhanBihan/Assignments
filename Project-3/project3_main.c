@@ -8,7 +8,6 @@
 /* Standard includes */
 #include <stdio.h>
 
-
 #include "Application.h"
 
 void initialize();
@@ -65,5 +64,5 @@ void initialize() {
     initLEDs();
     initButtons();
     // TODO: Add other initializations here
-
+    Buzzer_Init();
 }

@@ -8,7 +8,7 @@
 #ifndef HAL_GRAPHICS_H_
 #define HAL_GRAPHICS_H_
 
-#include <HAL/LcdDriver/Crystalfontz128x128_ST7735.h>
+#include <LcdDriver/Crystalfontz128x128_ST7735.h>
 #include <ti/devices/msp432p4xx/driverlib/driverlib.h>
 #include <ti/grlib/grlib.h>
 

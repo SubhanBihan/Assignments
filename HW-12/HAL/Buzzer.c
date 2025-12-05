@@ -9,8 +9,8 @@
 
 #include <ti/devices/msp432p4xx/driverlib/driverlib.h>
 
-// Set the tick per ms for the clock source
-#define CLKSOURCE_VAL          3000
+// Set the tick per s for the clock source
+#define CLKSOURCE_VAL          SYSTEM_CLOCK
 #define CLKSOURCE_DIV_VAL      PWM_CLKSOURCE_DIVIDER
 
 // // TODO: Set up timer for duration
@@ -30,8 +30,8 @@ note_t Note_Construct(float frequency_hz, uint32_t duration_ms, float duty_cycle
     note.duty_cycle = duty_cycle;
 
     // Compute the period and compare counts
-    note.period_counts = 1000 / (note.frequency_hz * frequency_base);
-    note.compare_counts = (1 - note.duty_cycle) * note.period_counts;
+    note.period_counts = frequency_base / note.frequency_hz;
+    note.compare_counts = note.duty_cycle * note.period_counts;
 
     return note;
 }
@@ -50,7 +50,7 @@ void Buzzer_Init()
 
 }
 
-void Buzzer_Play(note_t* note, SWTimer* buzzer_timer)
+void Buzzer_Play(note_t* note)
 {
     // TODO: Fill TimerPWM config from note
     Timer_A_PWMConfig pwmConfig;
@@ -74,8 +74,8 @@ void Buzzer_Play(note_t* note, SWTimer* buzzer_timer)
     // Generate PWM
     Timer_A_generatePWM(BUZZER_TIMER, &pwmConfig);
 
-    // Using SWTimer to play the note for required duration
-    SWTimer_start(&buzzer_timer);
+    // // Using SWTimer to play the note for required duration
+    // SWTimer_start(&buzzer_timer);
 }
 
 void Buzzer_Stop()

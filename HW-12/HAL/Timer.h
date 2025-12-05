@@ -19,8 +19,11 @@
 // clock as part of its timing therefore should parameterize their variables to
 // this #define and thus #include <API/Timer.h>.
 #define SYSTEM_CLOCK 48000000
+#define CLOCK_CYCLES_IN_MS \
+  (SYSTEM_CLOCK / 1000)  // number of clock cycles in 1ms
 
-#define LOADVALUE 0xFFFFFFFF
+// #define LOADVALUE 0xFFFFFFFF
+#define LOADVALUE (SYSTEM_CLOCK - 1)      // Sets a rollover frequency of 1s - perfect for periodically waking the CPU
 #define PRESCALER 1
 
 /**=================================================================================================
