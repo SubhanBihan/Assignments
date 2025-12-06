@@ -10,7 +10,7 @@
 #define HAL_HAL_H_
 
 // #include "HAL/Button.h"
-#include "HAL/HAL_ADC.h"
+#include "HAL/Joystick.h"
 #include "HAL/Button.h"
 #include "HAL/Graphics.h"
 #include "HAL/Buzzer.h"

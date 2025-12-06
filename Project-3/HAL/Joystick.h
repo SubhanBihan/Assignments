@@ -22,18 +22,12 @@ typedef enum {LEFT = -1, CENTERX, RIGHT} DirectionX_t;
 typedef enum {DOWN = -1, CENTERY, UP}    DirectionY_t;
 
 typedef struct {
-  // unsigned vx, vy;
-
-  // Keeps track of FSM progress in the Debouncing FSM
-  DirectionX_t StateX;
-  DirectionY_t StateY;
-
   // // The timer which is used to wait out a bouncy input
   // SWTimer timerX, timerY;
 
-  // The outputs of the FSM.
-  DirectionX_t PushedX, TappedX;
-  DirectionY_t PushedY, TappedY;
+  // The states and outputs of the FSM.
+  DirectionX_t StateX, PushedX, TappedX;
+  DirectionY_t StateY, PushedY, TappedY;
 } JoyStick;
 
 void initADC();

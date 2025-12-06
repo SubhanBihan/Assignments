@@ -1,4 +1,4 @@
-#include <HAL/HAL_ADC.h>
+#include <HAL/Joystick.h>
 
 // Initializing the ADC which resides on SoC
 void initADC() {

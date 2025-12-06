@@ -24,7 +24,7 @@ void HAL_construct(HAL* hal_p) {
   hal_p->buttons.BB1tapped = false;
   hal_p->buttons.BB2tapped = false;
   hal_p->buttons.JSBtapped = false;
-  hal_p->buttons.AnyButtonTap = false;
+  // hal_p->buttons.AnyButtonTap = false;
 
   // Initialize the ADC and Joystick
   initADC();

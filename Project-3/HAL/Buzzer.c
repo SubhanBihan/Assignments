@@ -73,9 +73,6 @@ void Buzzer_Play(note_t* note)
 
     // Generate PWM
     Timer_A_generatePWM(BUZZER_TIMER, &pwmConfig);
-
-    // // Using SWTimer to play the note for required duration
-    // SWTimer_start(&buzzer_timer);
 }
 
 void Buzzer_Stop()

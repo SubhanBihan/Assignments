@@ -137,5 +137,5 @@ void updateButtons(buttons_t* buttons) {
     buttons->BB1tapped = BB1tapped();
     buttons->BB2tapped = BB2tapped();
     buttons->JSBtapped = JSBtapped();
-    buttons->AnyButtonTap = buttons->LB1tapped || buttons->LB2tapped || buttons->BB1tapped || buttons->BB2tapped || buttons->JSBtapped;
+    // buttons->AnyButtonTap = buttons->LB1tapped || buttons->LB2tapped || buttons->BB1tapped || buttons->BB2tapped || buttons->JSBtapped;
 }

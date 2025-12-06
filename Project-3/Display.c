@@ -1,5 +1,87 @@
 #include "Display.h"
-// #include <Display.h>
+
+void normalize_v(BigNum *x) {
+    if (x->base >= BN_BASE_MAX) {
+        x->base /= BN_BASE_FACTOR;
+        x->mag++;
+    }
+    else if (x->base < BN_BASE_MIN) {
+        x->base *= BN_BASE_FACTOR;
+        x->mag--;
+    }
+}
+
+BigNum normalize_r(BigNum x) {
+    normalize_v(&x);
+    return x;
+}
+
+void addsub_v(BigNum* a, const BigNum* b, bool add_or_sub) {
+    BigNum temp = *b;
+    if (temp.mag < a->mag) {
+        // scale b upward
+        while (temp.mag < a->mag) {
+            temp.base /= BN_BASE_FACTOR;
+            temp.mag++;
+            if (temp.base < BN_BASE_MIN) break;
+        }
+    } else if (!add_or_sub && temp.mag > a->mag) {
+        // scale a upward
+        while (a->mag < temp.mag) {
+            a->base /= BN_BASE_FACTOR;
+            a->mag++;
+            if (a->base < BN_BASE_MIN) break;
+        }
+    }
+
+    a->base += temp.base * (add_or_sub ? -1.0 : 1.0);
+    normalize_v(a);
+}
+
+BigNum addsub_r(BigNum a, BigNum b, bool add_or_sub) {
+    addsub_v(&a, &b, add_or_sub);
+    return a;
+}
+
+void mul_v(BigNum* a, const BigNum* b) {
+    a->base *= b->base;
+    a->mag += b->mag;
+    normalize_v(a);
+}
+
+BigNum mul_r(BigNum a, BigNum b) {
+    mul_v(&a, &b);
+    return a;
+}
+
+void muld_v(BigNum* a, const double b) {
+    a->base *= b;
+    normalize_v(a);
+}
+
+BigNum muld_r(BigNum a, const double b) {
+    muld_v(&a, b);
+    return a;
+}
+
+bool GE_BigNum(const BigNum* a, const BigNum* b)
+{
+    if (a->mag != b->mag) return a->mag > b->mag;
+    return a->base >= b->base;
+}
+
+void Format_BigNum(const BigNum* x, char* out, size_t maxlen) {
+    static const char* SUFFIXES[] = { "", "k", "M", "B", "T", "Q", "q" };
+    if (x->mag == 0) {
+        snprintf(out, maxlen, "%.0f", x->base);
+    } else if (x->base >= 100.0) {
+        snprintf(out, maxlen, "%.0f%s", x->base, SUFFIXES[x->mag]);
+    } else if (x->base >= 10.0) {
+        snprintf(out, maxlen, "%.1f%s", x->base, SUFFIXES[x->mag]);
+    } else {
+        snprintf(out, maxlen, "%.2f%s", x->base, SUFFIXES[x->mag]);
+    }
+}
 
 uint32_t CircularIncrement(uint32_t value, uint32_t maximum) {
   return (value + 1) % maximum;
@@ -18,13 +100,13 @@ void TitleScreen(HAL* hal_p, display_t* disp_p) {
         GFX_clear(&hal_p->gfx);
         
         // Print Game name
-        GFX_print(&hal_p->gfx, "Cookie Clicker", 1, 1);
+        GFX_print(&hal_p->gfx, "Cookie Clicker", 1, 4);
 
         // Print Dev's name
-        GFX_print(&hal_p->gfx, "Samin Rahman", 3, 1);
+        GFX_print(&hal_p->gfx, "Samin Rahman", 3, 4);
 
         // Construct and start the timer
-        // TitleTimer = SWTimer_construct(TITLE_DURATION_MS);
+        TitleTimer = SWTimer_construct(TITLE_DURATION_MS);
         
         SWTimer_start(&TitleTimer);
 
@@ -33,8 +115,8 @@ void TitleScreen(HAL* hal_p, display_t* disp_p) {
     }
 
     // When the timer expries, change settings to move to Main Menu screen
-    // if (SWTimer_expired(&TitleTimer)) {
-    if (hal_p->buttons.AnyButtonTap) {
+    if (SWTimer_expired(&TitleTimer)) {
+    // if (hal_p->buttons.AnyButtonTap) {
         disp_p->screen = MAIN;
         disp_p->screen_changed = true;
     }
@@ -151,7 +233,7 @@ void MainScreen(HAL* hal_p, display_t* disp_p) {
 
 void InstructionsScreen(HAL* hal_p, display_t* disp_p) {
     // Instructions text - CHANGE THE LINES
-    static const char* lines[] = {"JSB for Cookies", "JS L/R to See Upgrade", "JS U/D to See Building", "BB1 to B/S Building", "BB2 to B/S Upgrade", "LB1/LB2 to Switch", "between Buy/Sell Mode"};
+    static const char* lines[] = {"LB1/LB2: Switch Mode", "Buy(B)/Sell(S)", "JSB for Cookies", "JS L/R: See Upgrade", "JS U/D: See Building", "BB1: B/S Building", "BB2: B/S Upgrade"};
     static const uint8_t num_lines = sizeof(lines) / sizeof(char*);
 
     if (disp_p->screen_changed) {   // Only do these when first entering main screen (function)
