@@ -28,7 +28,7 @@ void Application_construct(Application* app_p) {
     // uint8_t i;
 
     // // Set the display struct
-    // app_p->disp.gfx = GFX_construct(TEXT_COLOR, BACKGROUND_COLOR);
+    // app_p->disp.gfx = GFX_construct(TEXT_LIT_COLOR, BACKGROUND_COLOR);
 
     app_p->disp.screen_changed = true;
     app_p->disp.redraw = true;

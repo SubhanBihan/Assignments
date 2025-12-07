@@ -6,7 +6,7 @@
  */
 
  
-#include "HAL/Timer.h"
+#include "HAL/Buzzer.h"
 
 /** The reference counter which tracks how many rollovers have occurred. Used in
  * timing SWTimers. */
@@ -22,6 +22,13 @@ void T32_INT1_IRQHandler()
 {
   hwTimerRollovers++;
   Timer32_clearInterruptFlag(TIMER32_0_BASE);
+}
+
+// At the end of the one-shot timing, simply stop the buzzer
+void T32_INT2_IRQHandler()
+{
+  Buzzer_Stop();
+  Timer32_clearInterruptFlag(TIMER32_1_BASE);
 }
 
 /**
@@ -72,13 +79,26 @@ void InitSystemTiming()
                      TIMER32_PERIODIC_MODE);
   Timer32_setCount(TIMER32_0_BASE, LOADVALUE);
 
+  Timer32_initModule(TIMER32_1_BASE, TIMER32_PRESCALER_1, TIMER32_32BIT,
+                    TIMER32_PERIODIC_MODE);
+  
   // Starts the main reference hardware timer and enables an interrupt which
   // counts rollovers
   Timer32_startTimer(TIMER32_0_BASE, false);
 
+  // Clear interrupt flags and register timer interrupts in NVIC
+  Timer32_clearInterruptFlag(TIMER32_0_BASE);
+  Timer32_clearInterruptFlag(TIMER32_1_BASE);
+
+  Timer32_enableInterrupt(TIMER32_0_BASE);
+  Timer32_enableInterrupt(TIMER32_1_BASE);
+
+  Interrupt_enableInterrupt(INT_T32_INT1);
+  Interrupt_enableInterrupt(INT_T32_INT2);
+
   // Enable interrupts again, after all system timing has been set up properly
   Interrupt_enableMaster();
-  Interrupt_enableInterrupt(INT_T32_INT1);
+  
 }
 
 /**
@@ -202,4 +222,13 @@ double SWTimer_percentElapsed(SWTimer *timer_p)
   }
 
   return result;
+}
+
+// To be used exclusively for buzzer
+void StartHWTimer1(uint32_t waitTime_ms) {
+  // Load the counter
+  Timer32_setCount(TIMER32_1_BASE, (SYSTEM_CLOCK / MS_DIVISION_FACTOR) * waitTime_ms);
+
+  // Start the one-shot timer
+  Timer32_startTimer(TIMER32_1_BASE, true);
 }

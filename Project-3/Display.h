@@ -4,15 +4,10 @@
 #include "HAL/HAL.h"
 #include <stdlib.h>
 #include <math.h>
+#include <string.h>
 
 // General
-#define BACKGROUND_COLOR GRAPHICS_COLOR_BLACK
-#define TEXT_COLOR GRAPHICS_COLOR_WHITE
-#define ARROW_COLOR GRAPHICS_COLOR_GREEN
 #define TITLE_DURATION_MS 2000
-#define MIN_LINE_SPACING 12
-#define MAX_LINE_SPACING 25
-#define MIN_SECTION_GAP_ROWS 2
 
 // Game aspects
 #define CURSOR_STARTING_PRICE 2
@@ -34,6 +29,23 @@
 #define BN_BASE_MIN 1.0
 #define BN_BASE_MAX 1000.0
 #define BN_BASE_FACTOR 1000.0
+
+// For LCD and Text
+#define MIN_LINE_SPACING 12
+#define MAX_LINE_SPACING 25
+#define MIN_SECTION_GAP_ROWS 2
+#define TEXT_BUFFER_LENGTH 25
+#define TEXT_MIN_COL 1
+#define COOKIES_TEXT_ROW 1
+#define MODE_TEXT_ROW 3
+#define CURSOR_TEXT_ROW 4
+#define GRANDMA_TEXT_ROW (CURSOR_TEXT_ROW + 3)
+#define STATS_COL 12
+#define COOKIES_COL 9
+#define CPS_TEXT_COL 13
+#define CPS_STATS_COL 17
+#define MODE_COL 14
+
 
 // Small functional macros for convenience
 #define SQR(x) ((x) * (x))
@@ -67,8 +79,10 @@ typedef struct {
 typedef struct {
     BigNum cookies;
     mode_t mode;
-    uint16_t cursors_num, grandmas_num;
-    BigNum cursors_cpi, grandmas_cpi;
+    uint16_t cursor_num, grandma_num;
+    uint16_t cursor_lvl, grandma_lvl;
+    BigNum cursor_cost, grandma_cost;
+    BigNum cursor_cpi, grandma_cpi, cps;
 } game_state_t;
 
 
@@ -81,14 +95,20 @@ void addsub_v(BigNum* a, const BigNum* b, bool add_or_sub);     // 0 = add, 1 = 
 BigNum addsub_r(BigNum a, BigNum b, bool add_or_sub);
 void mul_v(BigNum* a, const BigNum* b);
 BigNum mul_r(BigNum a, BigNum b);
-void muld_v(BigNum* a, const double b);
-BigNum muld_r(BigNum a, const double b);
+void muldiv_v(BigNum* a, const double b, bool mul_or_div);
+BigNum muldiv_r(BigNum a, const double b, bool mul_or_div);
 
 // Comparison functions
 bool GE_BigNum(const BigNum* a, const BigNum* b);
 
 // String format function
 void Format_BigNum(const BigNum* x, char* out, size_t maxlen);
+
+// Calculate CPS
+BigNum GetCPS(const game_state_t* game_state_p);
+
+// // Print cookies
+// void PrintCookies(HAL* hal_p, game_state_t* game_state_p);
 
 // Increments a value and wraps around to 0 if it exceeds maximum
 uint32_t CircularIncrement(uint32_t value, uint32_t maximum);
@@ -97,12 +117,8 @@ uint32_t CircularIncrement(uint32_t value, uint32_t maximum);
 uint32_t CircularDecrement(uint32_t value, uint32_t maximum);
 
 
-
 // Draw the Title Screen
 void TitleScreen(HAL* hal_p, display_t* disp_p);
-
-// // Draw the text elements for the main screen
-// void MainScreen_Text(HAL* hal_p, uint8_t* j);
 
 // Handle the main menu screen logic and display
 void MainScreen(HAL* hal_p, display_t* disp_p);

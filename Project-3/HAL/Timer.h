@@ -19,11 +19,11 @@
 // clock as part of its timing therefore should parameterize their variables to
 // this #define and thus #include <API/Timer.h>.
 #define SYSTEM_CLOCK 48000000
-#define CLOCK_CYCLES_IN_MS \
-  (SYSTEM_CLOCK / 1000)  // number of clock cycles in 1ms
+#define CLOCK_CYCLES_IN_MS (SYSTEM_CLOCK / MS_DIVISION_FACTOR)  // number of clock cycles in 1ms
 
 // #define LOADVALUE 0xFFFFFFFF
-#define LOADVALUE (SYSTEM_CLOCK / PRESCALER - 1)      // Sets a rollover frequency of 1s - perfect for periodically waking the CPU
+#define MAIN_TIMER_ROLLOVER_MS 1000
+#define LOADVALUE (SYSTEM_CLOCK * MAIN_TIMER_ROLLOVER_MS / MS_DIVISION_FACTOR - 1)      // Sets a rollover frequency of corresponding to maximum acceptable time interval of system
 #define PRESCALER 1
 
 /**=================================================================================================
@@ -73,5 +73,7 @@ bool SWTimer_expired(SWTimer* timer);
 // Initializes the global clock system for the MSP432, as well as a hardware
 // timer under which all of the software timers are based.
 void InitSystemTiming();
+
+void StartHWTimer1(uint32_t waitTime_ms);
 
 #endif /* HAL_TIMER_H_ */

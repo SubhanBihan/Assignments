@@ -5,10 +5,11 @@ void normalize_v(BigNum *x) {
         x->base /= BN_BASE_FACTOR;
         x->mag++;
     }
-    else if (x->base < BN_BASE_MIN) {
+    else if (x->base < BN_BASE_MIN && x->base > 0) {
         x->base *= BN_BASE_FACTOR;
         x->mag--;
     }
+    else x->mag = 0;
 }
 
 BigNum normalize_r(BigNum x) {
@@ -34,7 +35,7 @@ void addsub_v(BigNum* a, const BigNum* b, bool add_or_sub) {
         }
     }
 
-    a->base += temp.base * (add_or_sub ? -1.0 : 1.0);
+    a->base += (add_or_sub ? -temp.base : temp.base);
     normalize_v(a);
 }
 
@@ -54,20 +55,21 @@ BigNum mul_r(BigNum a, BigNum b) {
     return a;
 }
 
-void muld_v(BigNum* a, const double b) {
-    a->base *= b;
+void muldiv_v(BigNum* a, const double b, bool mul_or_div) {
+    a->base *= (mul_or_div ? 1.0/b : b);
     normalize_v(a);
 }
 
-BigNum muld_r(BigNum a, const double b) {
-    muld_v(&a, b);
+BigNum muldiv_r(BigNum a, const double b, bool mul_or_div) {
+    muldiv_v(&a, b, mul_or_div);
     return a;
 }
 
 bool GE_BigNum(const BigNum* a, const BigNum* b)
 {
-    if (a->mag != b->mag) return a->mag > b->mag;
-    return a->base >= b->base;
+    // if (a->mag != b->mag) return a->mag > b->mag;
+    // return a->base >= b->base;
+    return (a->mag > b->mag) || (a->mag == b->mag && a->base >= b->base);
 }
 
 void Format_BigNum(const BigNum* x, char* out, size_t maxlen) {
@@ -81,6 +83,46 @@ void Format_BigNum(const BigNum* x, char* out, size_t maxlen) {
     } else {
         snprintf(out, maxlen, "%.2f%s", x->base, SUFFIXES[x->mag]);
     }
+}
+
+BigNum GetCPS(const game_state_t* game_state_p) {
+    BigNum total_cursor_cps = game_state_p->cursor_cpi;
+    BigNum total_grandma_cps = game_state_p->grandma_cpi;
+
+    total_cursor_cps.base *= game_state_p->cursor_num;
+    total_grandma_cps.base *= game_state_p->grandma_num;
+    total_grandma_cps.base /= (GRANDMA_INTERVAL_MS / CURSOR_INTERVAL_MS);
+
+    return addsub_r(total_cursor_cps, total_cursor_cps, false);
+}
+
+void PrintCookies(HAL* hal_p, game_state_t* game_state_p) {
+    char BNbuffer[TEXT_BUFFER_LENGTH];
+    Format_BigNum(&game_state_p->cookies, BNbuffer, TEXT_BUFFER_LENGTH);
+    GFX_print(&hal_p->gfx, BNbuffer, COOKIES_TEXT_ROW, COOKIES_COL);
+}
+
+void PrintCPS(HAL* hal_p, game_state_t* game_state_p) {
+    char BNbuffer[TEXT_BUFFER_LENGTH];
+    game_state_p->cps = GetCPS(game_state_p);
+    Format_BigNum(&game_state_p->cps, BNbuffer, TEXT_BUFFER_LENGTH);
+    GFX_print(&hal_p->gfx, BNbuffer, COOKIES_TEXT_ROW, CPS_STATS_COL);
+}
+
+void PrintCursor(HAL* hal_p, game_state_t* game_state_p) {
+    char BNbuffer[TEXT_BUFFER_LENGTH];
+    snprintf(BNbuffer, TEXT_BUFFER_LENGTH, "%d", game_state_p->cursor_num);
+    GFX_print(&hal_p->gfx, BNbuffer, CURSOR_TEXT_ROW, STATS_COL);
+    Format_BigNum(&game_state_p->cursor_cost, BNbuffer, TEXT_BUFFER_LENGTH);
+    GFX_print(&hal_p->gfx, BNbuffer, CURSOR_TEXT_ROW + 1, STATS_COL);
+}
+
+void PrintGrandma(HAL* hal_p, game_state_t* game_state_p) {
+    char BNbuffer[TEXT_BUFFER_LENGTH];
+    snprintf(BNbuffer, TEXT_BUFFER_LENGTH, "%d", game_state_p->grandma_num);
+    GFX_print(&hal_p->gfx, BNbuffer, GRANDMA_TEXT_ROW, STATS_COL);
+    Format_BigNum(&game_state_p->grandma_cost, BNbuffer, TEXT_BUFFER_LENGTH);
+    GFX_print(&hal_p->gfx, BNbuffer, GRANDMA_TEXT_ROW + 1, STATS_COL);
 }
 
 uint32_t CircularIncrement(uint32_t value, uint32_t maximum) {
@@ -122,24 +164,6 @@ void TitleScreen(HAL* hal_p, display_t* disp_p) {
     }
 }
 
-// void MainScreen_Text(HAL* hal_p, uint8_t* j) {
-//     // static const char* lines[] = {"  New Game", "  Resume Game", "  Instructions", "  High Scores", "BB1: Cursor Up", "BB2: Cursor Down", "JSB: Select"};
-//     static const char* lines[] = {"  Play Game", "  Instructions"};
-//     static const uint8_t num_lines = sizeof(lines) / sizeof(char*);
-
-//     Graphics_clearDisplay(&hal_p->gfx.context);
-//     GFX_setForeground(&hal_p->gfx, TEXT_COLOR);   // Text color
-    
-//     uint8_t i = 0;
-
-//     Graphics_drawString(&hal_p->gfx.context, (int8_t *)"MENU", -1, 5, MIN_LINE_SPACING * ++i, true);
-
-//     *j = i;
-
-//     for ( ; i - (*j) < num_lines; i++) {
-//         Graphics_drawString(&hal_p->gfx.context, lines[i - (*j)], -1, 5, MIN_LINE_SPACING * (i + 1), true);
-//     }
-// }
 
 void MainScreen(HAL* hal_p, display_t* disp_p) {
     static option_t option_num;
@@ -151,7 +175,7 @@ void MainScreen(HAL* hal_p, display_t* disp_p) {
     if (disp_p->screen_changed) {
         // MainScreen_Text(&hal_p->gfx.context, &j);
         Graphics_clearDisplay(&hal_p->gfx.context);
-        GFX_setForeground(&hal_p->gfx, TEXT_COLOR);   // Text color
+        GFX_setForeground(&hal_p->gfx, TEXT_LIT_COLOR);   // Text color
 
         uint8_t i = 0;
 
@@ -167,73 +191,34 @@ void MainScreen(HAL* hal_p, display_t* disp_p) {
         option_num = OPTION_ONE;
     }
 
-    // // Move cursor up
-    // if (hal_p->JS.TappedY == UP) {
-    //     // prev_option = option_num;
-    //     option_num = CircularDecrement(option_num, NUM_OPTIONS);
-    //     disp_p->redraw = true;
-    // }
-
-    // // Move cursor down
-    // if (hal_p->JS.TappedY == DOWN) {
-    //     // prev_option = option_num;
-    //     option_num = CircularIncrement(option_num, NUM_OPTIONS);
-    //     disp_p->redraw = true;
-    // }
-
     // Move cursor/arrow
     if (hal_p->JS.TappedY != CENTERY) {
-        switch (hal_p->JS.TappedY) {
-            case UP:
-                option_num = CircularDecrement(option_num, NUM_OPTIONS);
-                break;
-            case DOWN:
-                option_num = CircularIncrement(option_num, NUM_OPTIONS);
-                break;
-        }
-
+        option_num = hal_p->JS.TappedY == UP ? CircularDecrement(option_num, NUM_OPTIONS) : CircularIncrement(option_num, NUM_OPTIONS);
         disp_p->redraw = true;
     }
 
-
     // Change the option arrow
     if (disp_p->redraw) {
-        GFX_setForeground(&hal_p->gfx, ARROW_COLOR);
-
-        uint8_t k;
-
-        for (k = 0; k < NUM_OPTIONS; k++) {
+        uint8_t k; for (k = 0; k < NUM_OPTIONS; k++) {
             if (k == option_num)
                 Graphics_drawString(&hal_p->gfx.context, (int8_t *)">", -1, 5, MIN_LINE_SPACING * (j + k + 1), true);
             else
                 Graphics_drawString(&hal_p->gfx.context, (int8_t *)"  ", -1, 5, MIN_LINE_SPACING * (j + k + 1), true);
         }
-
         disp_p->redraw = false;
     }
 
-
     // Select the indicated option
     if (hal_p->buttons.JSBtapped) {
-        switch (option_num)
-        {
-            case OPTION_ONE:
-                disp_p->screen = GAME;
-                break;
-            
-            case OPTION_TWO:
-                disp_p->screen = INSTRUCTIONS;
-                break;
-        }
+        disp_p->screen = option_num == OPTION_ONE ? GAME : INSTRUCTIONS;
         disp_p->screen_changed = true;
     }
-
 }
 
 
 void InstructionsScreen(HAL* hal_p, display_t* disp_p) {
     // Instructions text - CHANGE THE LINES
-    static const char* lines[] = {"LB1/LB2: Switch Mode", "Buy(B)/Sell(S)", "JSB for Cookies", "JS L/R: See Upgrade", "JS U/D: See Building", "BB1: B/S Building", "BB2: B/S Upgrade"};
+    static const char* lines[] = {"LB1/LB2: Switch Mode", "Buy(B)/Sell(S)", "JSB: +1 Cookie", "JS L/R: See Upgrade", "JS U/D: See Building", "BB1: B/S Building", "BB2: B/S Upgrade"};
     static const uint8_t num_lines = sizeof(lines) / sizeof(char*);
 
     if (disp_p->screen_changed) {   // Only do these when first entering main screen (function)
@@ -243,7 +228,7 @@ void InstructionsScreen(HAL* hal_p, display_t* disp_p) {
         GFX_clear(&hal_p->gfx);
 
         // Set foreground color
-        GFX_setForeground(&hal_p->gfx, TEXT_COLOR);
+        GFX_setForeground(&hal_p->gfx, TEXT_LIT_COLOR);
 
         uint8_t i = 1;  // Tracking row of current line
 
@@ -270,39 +255,128 @@ void InstructionsScreen(HAL* hal_p, display_t* disp_p) {
 
 
 void GameScreen(HAL* hal_p, display_t* disp_p, game_state_t* game_state_p) {
-    char line[20];
+    static const char* Mode[] = {"Buy ", "Sell"};
 
-    static SWTimer buzzer_timer;
+    static option_t build_opn = OPTION_ONE;
+    static uint16_t *Current_num_p;
+    static BigNum *Current_cost_p, *Current_cpi_p;
+    static SWTimer cursor_timer, grandma_timer, buzzer_timer;
+
+    static bool Build_isviable = false, Build_wasviable = false;
+    bool cookies_changed = false, cps_changed = false, mode_changed = false, varrow_changed = false, cursor_changed = false, grandma_changed = false;
 
     if (disp_p->screen_changed) {   // Only do these when first entering main screen (function)
         // Clear the display
         GFX_clear(&hal_p->gfx);
 
-        GFX_print(&hal_p->gfx, "GAME", 1, 1);
+        game_state_p->cookies = game_state_p->cursor_cost = game_state_p->grandma_cost = game_state_p->grandma_cpi = game_state_p->cursor_cpi = game_state_p->cps = (BigNum) {0.0, 0};
+        game_state_p->cursor_num = game_state_p->grandma_num = game_state_p->cursor_lvl = game_state_p->grandma_lvl = 0;
+        game_state_p->mode = BUY;
 
-        GFX_print(&hal_p->gfx, "JSB: Go Back", 12, 1);
+        cookies_changed = cps_changed = mode_changed = varrow_changed = cursor_changed = grandma_changed = true;
 
-        // C4 Note
-        note_t note = Note_Construct(NOTE_C4, 1000, 0.5);
+        GFX_print(&hal_p->gfx, "Cookies",   COOKIES_TEXT_ROW, TEXT_MIN_COL);
+        GFX_print(&hal_p->gfx, "CPS",       COOKIES_TEXT_ROW, CPS_TEXT_COL);
+        GFX_print(&hal_p->gfx, "BUILDINGS", MODE_TEXT_ROW, TEXT_MIN_COL);
+        // GFX_print(&hal_p->gfx, "|",         MODE_TEXT_ROW, MODE_SEP_COL);
+        GFX_print(&hal_p->gfx, "  Cursor",  CURSOR_TEXT_ROW, TEXT_MIN_COL);
+        GFX_print(&hal_p->gfx, "  Cost",    CURSOR_TEXT_ROW + 1, TEXT_MIN_COL);
+        GFX_print(&hal_p->gfx, "  Grandma", GRANDMA_TEXT_ROW, TEXT_MIN_COL);
+        GFX_print(&hal_p->gfx, "  Cost",    GRANDMA_TEXT_ROW + 1, TEXT_MIN_COL);
 
-        buzzer_timer = SWTimer_construct(note.duration_ms);
-        Buzzer_Play(&note);
-        SWTimer_start(&buzzer_timer);
-
+        cursor_timer = SWTimer_construct(CURSOR_INTERVAL_MS);
+        grandma_timer = SWTimer_construct(GRANDMA_INTERVAL_MS);
+        SWTimer_start(&cursor_timer);
+        SWTimer_start(&grandma_timer);
 
         // Set flags to stay on this screen
         disp_p->screen_changed = false;
         disp_p->redraw = true;
     }
 
-    if (SWTimer_expired(&buzzer_timer)) Buzzer_Stop();
-
-
-    // Exit the game
+    // JSB tapped = +1 Cookie
     if (hal_p->buttons.JSBtapped) {
-        Buzzer_Stop();
-        disp_p->screen = MAIN;
-        disp_p->screen_changed = true;
+        game_state_p->cookies.base++;
+        normalize_v(&game_state_p->cookies);
+        cookies_changed = true;
     }
+
+    // Add Cursor CPI every 1s
+    if (SWTimer_expired(&cursor_timer)) {
+        if (game_state_p->cursor_num > 0) {
+            addsub_v(&game_state_p->cookies, &game_state_p->cursor_cpi, false);
+            cookies_changed = true;
+        }
+        SWTimer_start(&cursor_timer);
+    }
+
+    // Add Grandma CPI every 5s
+    if (SWTimer_expired(&grandma_timer)) {
+        if (game_state_p->grandma_num > 0) {
+            addsub_v(&game_state_p->cookies, &game_state_p->grandma_cpi, false);
+            cookies_changed = true;
+        }
+        SWTimer_start(&grandma_timer);
+    }
+
+    // Change Mode
+    if (hal_p->buttons.LB1tapped || hal_p->buttons.LB2tapped) {
+        game_state_p->mode = 1 - game_state_p->mode;
+        mode_changed = true;
+    }
+
+    // Move cursor/arrow
+    if (hal_p->JS.TappedY != CENTERY) {
+        build_opn = hal_p->JS.TappedY == UP ? CircularDecrement(build_opn, NUM_OPTIONS) : CircularIncrement(build_opn, NUM_OPTIONS);
+        varrow_changed = true;
+    }
+
+    // Change pointers to current building specs
+    if (varrow_changed) {       // Building selection changed if this this true (at this point)
+        if (build_opn == OPTION_ONE) {
+            Current_num_p = &game_state_p->cursor_num; Current_cost_p = &game_state_p->cursor_cost; Current_cpi_p = &game_state_p->cursor_cpi;
+        }
+        else {
+            Current_num_p = &game_state_p->grandma_num; Current_cost_p = &game_state_p->grandma_cost; Current_cpi_p = &game_state_p->grandma_cpi;
+        }
+    }
+
     
+    // Buy/Sell Building
+    if (hal_p->buttons.BB1tapped && Build_isviable) {
+        addsub_v(&game_state_p->cookies, &Current_cost_p, game_state_p->mode == BUY);      // Subtract current cost from cookies
+        *Current_num_p = game_state_p->mode == BUY ? 1 : -1;
+        muldiv_v(Current_cost_p, build_opn == OPTION_ONE ? CURSOR_PRICE_MULT : GRANDMA_PRICE_MULT, game_state_p->mode == SELL);
+        // NOTE: CPI is per building unit, so is unchanged by building number
+
+        cookies_changed = true;
+        cps_changed = true;
+        cursor_changed = (build_opn == OPTION_ONE);
+        grandma_changed = (build_opn == OPTION_TWO);
+    }
+
+    // Check if Building B/S viable
+    Build_isviable = (game_state_p->mode == BUY && GE_BigNum(&game_state_p->cookies, Current_cost_p)) || (game_state_p->mode == SELL && *Current_num_p > 0);
+    if (Build_isviable != Build_wasviable) varrow_changed = true;
+    Build_wasviable = Build_isviable;
+    
+    // Print Vertical (Bulding selector) arrow
+    if (varrow_changed) {
+        if (!Build_isviable) GFX_setForeground(&hal_p->gfx, TEXT_DARK_COLOR);
+        GFX_print(&hal_p->gfx, ">",  build_opn == OPTION_ONE ? CURSOR_TEXT_ROW : GRANDMA_TEXT_ROW, STATS_COL);
+        GFX_print(&hal_p->gfx, "  ", build_opn == OPTION_TWO ? CURSOR_TEXT_ROW : GRANDMA_TEXT_ROW, STATS_COL);
+        if (!Build_isviable) GFX_setForeground(&hal_p->gfx, TEXT_LIT_COLOR);
+    }
+
+    // Print the other stats
+    if (cookies_changed) PrintCookies(hal_p, game_state_p);
+    
+    if (mode_changed) GFX_print(&hal_p->gfx, Mode[game_state_p->mode], MODE_TEXT_ROW, MODE_COL);
+    
+    if (cps_changed) PrintCPS(hal_p, game_state_p);
+
+    if (cursor_changed) PrintCursor(hal_p, game_state_p);
+
+    if (grandma_changed) PrintGrandma(hal_p, game_state_p);
+
 }

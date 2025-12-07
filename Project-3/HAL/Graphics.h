@@ -12,8 +12,9 @@
 #include <ti/devices/msp432p4xx/driverlib/driverlib.h>
 #include <ti/grlib/grlib.h>
 
-#define FG_COLOR GRAPHICS_COLOR_WHITE
-#define BG_COLOR GRAPHICS_COLOR_BLACK
+#define BACKGROUND_COLOR GRAPHICS_COLOR_BLACK
+#define TEXT_LIT_COLOR GRAPHICS_COLOR_WHITE
+#define TEXT_DARK_COLOR GRAPHICS_COLOR_GRAY
 
 struct _GFX
 {

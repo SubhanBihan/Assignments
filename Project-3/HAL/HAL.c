@@ -39,7 +39,7 @@ void HAL_construct(HAL* hal_p) {
 //   UART_SetBaud_Enable(&hal.uart, BAUD_9600);
 
   // Construct the GFX module inside of this HAL struct
-  hal_p->gfx = GFX_construct(FG_COLOR, BG_COLOR);
+  hal_p->gfx = GFX_construct(TEXT_LIT_COLOR, BACKGROUND_COLOR);
 
 //   // Once we have finished building the API, return the completed struct.
 //   return hal;
