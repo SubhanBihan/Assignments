@@ -8,7 +8,7 @@ SWTimer_start(&buzzer_timer);
 
 if (SWTimer_expired(&buzzer_timer)) Buzzer_Stop();
 
-switch (game_state_p->mode) {
+switch (gs_p->mode) {
     case BUY:
         
         break;

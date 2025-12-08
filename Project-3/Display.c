@@ -85,43 +85,43 @@ void Format_BigNum(const BigNum* x, char* out, size_t maxlen) {
     }
 }
 
-BigNum GetCPS(const game_state_t* game_state_p) {
-    BigNum total_cursor_cps = game_state_p->cursor_cpi;
-    BigNum total_grandma_cps = game_state_p->grandma_cpi;
+BigNum GetCPS(const game_state_t* gs_p) {
+    BigNum total_cursor_cps = gs_p->cursor_cpi;
+    BigNum total_grandma_cps = gs_p->grandma_cpi;
 
-    total_cursor_cps.base *= game_state_p->cursor_num;
-    total_grandma_cps.base *= game_state_p->grandma_num;
+    total_cursor_cps.base *= gs_p->cursor_num;
+    total_grandma_cps.base *= gs_p->grandma_num;
     total_grandma_cps.base /= (GRANDMA_INTERVAL_MS / CURSOR_INTERVAL_MS);
 
     return addsub_r(total_cursor_cps, total_cursor_cps, false);
 }
 
-void PrintCookies(HAL* hal_p, game_state_t* game_state_p) {
+void PrintCookies(HAL* hal_p, game_state_t* gs_p) {
     char BNbuffer[TEXT_BUFFER_LENGTH];
-    Format_BigNum(&game_state_p->cookies, BNbuffer, TEXT_BUFFER_LENGTH);
+    Format_BigNum(&gs_p->cookies, BNbuffer, TEXT_BUFFER_LENGTH);
     GFX_print(&hal_p->gfx, BNbuffer, COOKIES_TEXT_ROW, COOKIES_COL);
 }
 
-void PrintCPS(HAL* hal_p, game_state_t* game_state_p) {
+void PrintCPS(HAL* hal_p, game_state_t* gs_p) {
     char BNbuffer[TEXT_BUFFER_LENGTH];
-    game_state_p->cps = GetCPS(game_state_p);
-    Format_BigNum(&game_state_p->cps, BNbuffer, TEXT_BUFFER_LENGTH);
+    gs_p->cps = GetCPS(gs_p);
+    Format_BigNum(&gs_p->cps, BNbuffer, TEXT_BUFFER_LENGTH);
     GFX_print(&hal_p->gfx, BNbuffer, COOKIES_TEXT_ROW, CPS_STATS_COL);
 }
 
-void PrintCursor(HAL* hal_p, game_state_t* game_state_p) {
+void PrintCursor(HAL* hal_p, game_state_t* gs_p) {
     char BNbuffer[TEXT_BUFFER_LENGTH];
-    snprintf(BNbuffer, TEXT_BUFFER_LENGTH, "%d", game_state_p->cursor_num);
+    snprintf(BNbuffer, TEXT_BUFFER_LENGTH, "%d", gs_p->cursor_num);
     GFX_print(&hal_p->gfx, BNbuffer, CURSOR_TEXT_ROW, STATS_COL);
-    Format_BigNum(&game_state_p->cursor_cost, BNbuffer, TEXT_BUFFER_LENGTH);
+    Format_BigNum(&gs_p->cursor_cost, BNbuffer, TEXT_BUFFER_LENGTH);
     GFX_print(&hal_p->gfx, BNbuffer, CURSOR_TEXT_ROW + 1, STATS_COL);
 }
 
-void PrintGrandma(HAL* hal_p, game_state_t* game_state_p) {
+void PrintGrandma(HAL* hal_p, game_state_t* gs_p) {
     char BNbuffer[TEXT_BUFFER_LENGTH];
-    snprintf(BNbuffer, TEXT_BUFFER_LENGTH, "%d", game_state_p->grandma_num);
+    snprintf(BNbuffer, TEXT_BUFFER_LENGTH, "%d", gs_p->grandma_num);
     GFX_print(&hal_p->gfx, BNbuffer, GRANDMA_TEXT_ROW, STATS_COL);
-    Format_BigNum(&game_state_p->grandma_cost, BNbuffer, TEXT_BUFFER_LENGTH);
+    Format_BigNum(&gs_p->grandma_cost, BNbuffer, TEXT_BUFFER_LENGTH);
     GFX_print(&hal_p->gfx, BNbuffer, GRANDMA_TEXT_ROW + 1, STATS_COL);
 }
 
@@ -254,7 +254,7 @@ void InstructionsScreen(HAL* hal_p, display_t* disp_p) {
 }
 
 
-void GameScreen(HAL* hal_p, display_t* disp_p, game_state_t* game_state_p) {
+void GameScreen(HAL* hal_p, display_t* disp_p, game_state_t* gs_p) {
     static const char* Mode[] = {"Buy ", "Sell"};
 
     static option_t build_opn = OPTION_ONE;
@@ -269,9 +269,9 @@ void GameScreen(HAL* hal_p, display_t* disp_p, game_state_t* game_state_p) {
         // Clear the display
         GFX_clear(&hal_p->gfx);
 
-        game_state_p->cookies = game_state_p->cursor_cost = game_state_p->grandma_cost = game_state_p->grandma_cpi = game_state_p->cursor_cpi = game_state_p->cps = (BigNum) {0.0, 0};
-        game_state_p->cursor_num = game_state_p->grandma_num = game_state_p->cursor_lvl = game_state_p->grandma_lvl = 0;
-        game_state_p->mode = BUY;
+        gs_p->cookies = gs_p->cursor_cost = gs_p->grandma_cost = gs_p->grandma_cpi = gs_p->cursor_cpi = gs_p->cps = (BigNum) {0.0, 0};
+        gs_p->cursor_num = gs_p->grandma_num = gs_p->cursor_lvl = gs_p->grandma_lvl = 0;
+        gs_p->mode = BUY;
 
         cookies_changed = cps_changed = mode_changed = varrow_changed = cursor_changed = grandma_changed = true;
 
@@ -296,15 +296,15 @@ void GameScreen(HAL* hal_p, display_t* disp_p, game_state_t* game_state_p) {
 
     // JSB tapped = +1 Cookie
     if (hal_p->buttons.JSBtapped) {
-        game_state_p->cookies.base++;
-        normalize_v(&game_state_p->cookies);
+        gs_p->cookies.base++;
+        normalize_v(&gs_p->cookies);
         cookies_changed = true;
     }
 
     // Add Cursor CPI every 1s
     if (SWTimer_expired(&cursor_timer)) {
-        if (game_state_p->cursor_num > 0) {
-            addsub_v(&game_state_p->cookies, &game_state_p->cursor_cpi, false);
+        if (gs_p->cursor_num > 0) {
+            addsub_v(&gs_p->cookies, &gs_p->cursor_cpi, false);
             cookies_changed = true;
         }
         SWTimer_start(&cursor_timer);
@@ -312,8 +312,8 @@ void GameScreen(HAL* hal_p, display_t* disp_p, game_state_t* game_state_p) {
 
     // Add Grandma CPI every 5s
     if (SWTimer_expired(&grandma_timer)) {
-        if (game_state_p->grandma_num > 0) {
-            addsub_v(&game_state_p->cookies, &game_state_p->grandma_cpi, false);
+        if (gs_p->grandma_num > 0) {
+            addsub_v(&gs_p->cookies, &gs_p->grandma_cpi, false);
             cookies_changed = true;
         }
         SWTimer_start(&grandma_timer);
@@ -321,7 +321,7 @@ void GameScreen(HAL* hal_p, display_t* disp_p, game_state_t* game_state_p) {
 
     // Change Mode
     if (hal_p->buttons.LB1tapped || hal_p->buttons.LB2tapped) {
-        game_state_p->mode = 1 - game_state_p->mode;
+        gs_p->mode = 1 - gs_p->mode;
         mode_changed = true;
     }
 
@@ -334,19 +334,19 @@ void GameScreen(HAL* hal_p, display_t* disp_p, game_state_t* game_state_p) {
     // Change pointers to current building specs
     if (varrow_changed) {       // Building selection changed if this this true (at this point)
         if (build_opn == OPTION_ONE) {
-            Current_num_p = &game_state_p->cursor_num; Current_cost_p = &game_state_p->cursor_cost; Current_cpi_p = &game_state_p->cursor_cpi;
+            Current_num_p = &gs_p->cursor_num; Current_cost_p = &gs_p->cursor_cost; Current_cpi_p = &gs_p->cursor_cpi;
         }
         else {
-            Current_num_p = &game_state_p->grandma_num; Current_cost_p = &game_state_p->grandma_cost; Current_cpi_p = &game_state_p->grandma_cpi;
+            Current_num_p = &gs_p->grandma_num; Current_cost_p = &gs_p->grandma_cost; Current_cpi_p = &gs_p->grandma_cpi;
         }
     }
 
     
     // Buy/Sell Building
     if (hal_p->buttons.BB1tapped && Build_isviable) {
-        addsub_v(&game_state_p->cookies, &Current_cost_p, game_state_p->mode == BUY);      // Subtract current cost from cookies
-        *Current_num_p = game_state_p->mode == BUY ? 1 : -1;
-        muldiv_v(Current_cost_p, build_opn == OPTION_ONE ? CURSOR_PRICE_MULT : GRANDMA_PRICE_MULT, game_state_p->mode == SELL);
+        addsub_v(&gs_p->cookies, &Current_cost_p, gs_p->mode == BUY);      // Subtract current cost from cookies
+        *Current_num_p = gs_p->mode == BUY ? 1 : -1;
+        muldiv_v(Current_cost_p, build_opn == OPTION_ONE ? CURSOR_PRICE_MULT : GRANDMA_PRICE_MULT, gs_p->mode == SELL);
         // NOTE: CPI is per building unit, so is unchanged by building number
 
         cookies_changed = true;
@@ -356,7 +356,7 @@ void GameScreen(HAL* hal_p, display_t* disp_p, game_state_t* game_state_p) {
     }
 
     // Check if Building B/S viable
-    Build_isviable = (game_state_p->mode == BUY && GE_BigNum(&game_state_p->cookies, Current_cost_p)) || (game_state_p->mode == SELL && *Current_num_p > 0);
+    Build_isviable = (gs_p->mode == BUY && GE_BigNum(&gs_p->cookies, Current_cost_p)) || (gs_p->mode == SELL && *Current_num_p > 0);
     if (Build_isviable != Build_wasviable) varrow_changed = true;
     Build_wasviable = Build_isviable;
     
@@ -369,14 +369,14 @@ void GameScreen(HAL* hal_p, display_t* disp_p, game_state_t* game_state_p) {
     }
 
     // Print the other stats
-    if (cookies_changed) PrintCookies(hal_p, game_state_p);
+    if (cookies_changed) PrintCookies(hal_p, gs_p);
     
-    if (mode_changed) GFX_print(&hal_p->gfx, Mode[game_state_p->mode], MODE_TEXT_ROW, MODE_COL);
+    if (mode_changed) GFX_print(&hal_p->gfx, Mode[gs_p->mode], MODE_TEXT_ROW, MODE_COL);
     
-    if (cps_changed) PrintCPS(hal_p, game_state_p);
+    if (cps_changed) PrintCPS(hal_p, gs_p);
 
-    if (cursor_changed) PrintCursor(hal_p, game_state_p);
+    if (cursor_changed) PrintCursor(hal_p, gs_p);
 
-    if (grandma_changed) PrintGrandma(hal_p, game_state_p);
+    if (grandma_changed) PrintGrandma(hal_p, gs_p);
 
 }

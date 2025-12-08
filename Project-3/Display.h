@@ -105,10 +105,10 @@ bool GE_BigNum(const BigNum* a, const BigNum* b);
 void Format_BigNum(const BigNum* x, char* out, size_t maxlen);
 
 // Calculate CPS
-BigNum GetCPS(const game_state_t* game_state_p);
+BigNum GetCPS(const game_state_t* gs_p);
 
 // // Print cookies
-// void PrintCookies(HAL* hal_p, game_state_t* game_state_p);
+// void PrintCookies(HAL* hal_p, game_state_t* gs_p);
 
 // Increments a value and wraps around to 0 if it exceeds maximum
 uint32_t CircularIncrement(uint32_t value, uint32_t maximum);
@@ -127,6 +127,6 @@ void MainScreen(HAL* hal_p, display_t* disp_p);
 void InstructionsScreen(HAL* hal_p, display_t* disp_p);
 
 // Game Screen
-void GameScreen(HAL* hal_p, display_t* disp_p, game_state_t* game_state_p);
+void GameScreen(HAL* hal_p, display_t* disp_p, game_state_t* gs_p);
 
 #endif

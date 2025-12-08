@@ -16,7 +16,7 @@ void ScreenSelect(HAL* hal_p, Application* app_p) {
             break;
         
         case GAME:
-            GameScreen(hal_p, &app_p->disp, &app_p->game_state);
+            GameScreen(hal_p, &app_p->disp, &app_p->gs);
             break;
         
         default:

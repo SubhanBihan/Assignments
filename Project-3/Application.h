@@ -4,7 +4,7 @@
 #include "Display.h"
 
 struct _Application {
-  game_state_t game_state;
+  game_state_t gs;
   display_t disp;
 };
 
