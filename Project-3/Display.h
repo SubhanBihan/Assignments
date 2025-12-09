@@ -82,6 +82,9 @@ typedef struct {
     uint16_t cursor_num, grandma_num;
     uint16_t cursor_lvl, grandma_lvl;
     BigNum cursor_cost, grandma_cost;
+    BigNum cursor_expense, grandma_expense;
+    BigNum cursor_upg_cost, grandma_upg_cost;
+    BigNum cursor_upg_expense, grandma_upg_expense;
     BigNum cursor_cpi, grandma_cpi, cps;
 } game_state_t;
 

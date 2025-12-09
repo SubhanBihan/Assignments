@@ -259,7 +259,7 @@ void GameScreen(HAL* hal_p, display_t* disp_p, game_state_t* gs_p) {
 
     static option_t build_opn = OPTION_ONE;
     static uint16_t *Current_num_p;
-    static BigNum *Current_cost_p, *Current_cpi_p;
+    static BigNum *Current_cost_p, *Current_expense_p, *Current_upg_cost_p, *Current_upg_expense_p, *Current_cpi_p;
     static SWTimer cursor_timer, grandma_timer, buzzer_timer;
 
     static bool Build_isviable = false, Build_wasviable = false;
@@ -269,8 +269,10 @@ void GameScreen(HAL* hal_p, display_t* disp_p, game_state_t* gs_p) {
         // Clear the display
         GFX_clear(&hal_p->gfx);
 
-        gs_p->cookies = gs_p->cursor_cost = gs_p->grandma_cost = gs_p->grandma_cpi = gs_p->cursor_cpi = gs_p->cps = (BigNum) {0.0, 0};
+        gs_p->cookies = gs_p->grandma_expense = gs_p->cursor_expense = gs_p->grandma_upg_expense = gs_p->cursor_upg_expense = gs_p->grandma_cpi = gs_p->cursor_cpi = gs_p->cps = (BigNum) {0.0, 0};
         gs_p->cursor_num = gs_p->grandma_num = gs_p->cursor_lvl = gs_p->grandma_lvl = 0;
+        gs_p->cursor_cost = (BigNum) {CURSOR_STARTING_PRICE, 0}; gs_p->grandma_cost = (BigNum) {GRANDMA_STARTING_PRICE, 0};
+        gs_p->cursor_upg_cost = (BigNum) {CURSOR_UPG_STARTING_PRICE, 0}; gs_p->grandma_upg_cost = (BigNum) {GRANDMA_UPG_STARTING_PRICE, 0};
         gs_p->mode = BUY;
 
         cookies_changed = cps_changed = mode_changed = varrow_changed = cursor_changed = grandma_changed = true;
@@ -323,6 +325,8 @@ void GameScreen(HAL* hal_p, display_t* disp_p, game_state_t* gs_p) {
     if (hal_p->buttons.LB1tapped || hal_p->buttons.LB2tapped) {
         gs_p->mode = 1 - gs_p->mode;
         mode_changed = true;
+
+        // If post = yes, cursor_changed and grandma_changed will be set to true here!
     }
 
     // Move cursor/arrow
@@ -334,19 +338,29 @@ void GameScreen(HAL* hal_p, display_t* disp_p, game_state_t* gs_p) {
     // Change pointers to current building specs
     if (varrow_changed) {       // Building selection changed if this this true (at this point)
         if (build_opn == OPTION_ONE) {
-            Current_num_p = &gs_p->cursor_num; Current_cost_p = &gs_p->cursor_cost; Current_cpi_p = &gs_p->cursor_cpi;
+            Current_num_p = &gs_p->cursor_num; Current_cost_p = &gs_p->cursor_cost; Current_expense_p = &gs_p->cursor_expense; Current_cpi_p = &gs_p->cursor_cpi;
         }
         else {
-            Current_num_p = &gs_p->grandma_num; Current_cost_p = &gs_p->grandma_cost; Current_cpi_p = &gs_p->grandma_cpi;
+            Current_num_p = &gs_p->grandma_num; Current_cost_p = &gs_p->grandma_cost; Current_expense_p = &gs_p->grandma_expense; Current_cpi_p = &gs_p->grandma_cpi;
         }
     }
 
     
     // Buy/Sell Building
     if (hal_p->buttons.BB1tapped && Build_isviable) {
-        addsub_v(&gs_p->cookies, &Current_cost_p, gs_p->mode == BUY);      // Subtract current cost from cookies
-        *Current_num_p = gs_p->mode == BUY ? 1 : -1;
-        muldiv_v(Current_cost_p, build_opn == OPTION_ONE ? CURSOR_PRICE_MULT : GRANDMA_PRICE_MULT, gs_p->mode == SELL);
+        if (gs_p->mode == BUY) {
+            addsub_v(&gs_p->cookies, &Current_cost_p, true);        // Subtract the building cost from cookies
+            (*Current_num_p)++;                                     // Add a building
+            muldiv_v(Current_cost_p, build_opn == OPTION_ONE ? CURSOR_PRICE_MULT : GRANDMA_PRICE_MULT, false);      // Scale up both the (next) buy and sell prices
+            muldiv_v(Current_expense_p, build_opn == OPTION_ONE ? CURSOR_PRICE_MULT : GRANDMA_PRICE_MULT, false);
+        }
+        else {
+            addsub_v(&gs_p->cookies, &Current_expense_p, false);        // Add the building expense to cookies
+            (*Current_num_p)--;                                         // Subtract a building
+            muldiv_v(Current_cost_p, build_opn == OPTION_ONE ? CURSOR_PRICE_MULT : GRANDMA_PRICE_MULT, true);      // Scale down both the (next) buy and sell prices
+            muldiv_v(Current_expense_p, build_opn == OPTION_ONE ? CURSOR_PRICE_MULT : GRANDMA_PRICE_MULT, true);
+        }
+        
         // NOTE: CPI is per building unit, so is unchanged by building number
 
         cookies_changed = true;
@@ -356,9 +370,11 @@ void GameScreen(HAL* hal_p, display_t* disp_p, game_state_t* gs_p) {
     }
 
     // Check if Building B/S viable
-    Build_isviable = (gs_p->mode == BUY && GE_BigNum(&gs_p->cookies, Current_cost_p)) || (gs_p->mode == SELL && *Current_num_p > 0);
-    if (Build_isviable != Build_wasviable) varrow_changed = true;
-    Build_wasviable = Build_isviable;
+    if (cookies_changed || mode_changed) {
+        Build_isviable = (gs_p->mode == BUY && GE_BigNum(&gs_p->cookies, Current_cost_p)) || (gs_p->mode == SELL && *Current_num_p > 0);
+        if (Build_isviable != Build_wasviable) varrow_changed = true;
+        Build_wasviable = Build_isviable;
+    }
     
     // Print Vertical (Bulding selector) arrow
     if (varrow_changed) {
