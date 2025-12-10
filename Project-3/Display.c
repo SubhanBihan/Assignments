@@ -370,7 +370,7 @@ void GameScreen(HAL* hal_p, display_t* disp_p, game_state_t* gs_p) {
         GFX_setForeground(&hal_p->gfx, TEXT_LIT_COLOR);
     }
 
-    // Changw horizontal option
+    // Change horizontal option
     if (hal_p->JS.TappedX != CENTERX) {
         upg_opn = hal_p->JS.TappedX == LEFT ? CircularDecrement(upg_opn, NUM_OPTIONS) : CircularIncrement(upg_opn, NUM_OPTIONS);
         harrow_changed = true;
@@ -469,15 +469,15 @@ void GameScreen(HAL* hal_p, display_t* disp_p, game_state_t* gs_p) {
         if (!upg_isviable) GFX_setForeground(&hal_p->gfx, TEXT_LIT_COLOR);
     }
 
-    // Print Vertical (Bulding selector) arrow
+    // Draw Vertical (Bulding selector) arrow
     if (varrow_changed) {
         if (!bld_isviable) GFX_setForeground(&hal_p->gfx, TEXT_DARK_COLOR);
-        GFX_print(&hal_p->gfx, "> ",  bld_opn == OPTION_ONE ? CURSOR_ROW : GRANDMA_ROW, INDENT_COL);
-        GFX_print(&hal_p->gfx, "  ", bld_opn == OPTION_TWO ? CURSOR_ROW : GRANDMA_ROW, INDENT_COL);
+        GFX_print(&hal_p->gfx, "> ",  bld_opn == OPTION_ONE ? CURSOR_ROW : GRANDMA_ROW, TEXT_MIN_COL);
+        GFX_print(&hal_p->gfx, "  ", bld_opn == OPTION_TWO ? CURSOR_ROW : GRANDMA_ROW, TEXT_MIN_COL);
         if (!bld_isviable) GFX_setForeground(&hal_p->gfx, TEXT_LIT_COLOR);
     }
 
-    // Print Horizontal (Upgrade selector) arrows
+    // Draw Horizontal (Upgrade selector) arrows
     if (harrow_changed) {
         GFX_setForeground(&hal_p->gfx, TEXT_DARK_COLOR);
         GFX_print(&hal_p->gfx, HArrows[upg_opn], UPGRADE_ROW, upg_opn == OPTION_ONE ? LEFT_ARROW_COL : RIGHT_ARROW_COL);
