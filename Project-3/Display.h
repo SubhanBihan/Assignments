@@ -36,15 +36,25 @@
 #define MIN_SECTION_GAP_ROWS 2
 #define TEXT_BUFFER_LENGTH 25
 #define TEXT_MIN_COL 1
-#define COOKIES_TEXT_ROW 1
-#define MODE_TEXT_ROW 3
-#define CURSOR_TEXT_ROW 4
-#define GRANDMA_TEXT_ROW (CURSOR_TEXT_ROW + 3)
+#define COOKIES_ROW 1
+#define MODE_ROW 2
+#define BUILDINGS_DESC_ROW 3
+#define CURSOR_ROW 4
+#define GRANDMA_ROW (CURSOR_ROW + 3)
+#define UPGRADES_DESC_ROW (GRANDMA_ROW + 3)
+#define UPGRADE_ROW (UPGRADES_DESC_ROW + 1)
 #define STATS_COL 12
+#define INDENT_COL 3
 #define COOKIES_COL 9
 #define CPS_TEXT_COL 13
 #define CPS_STATS_COL 17
-#define MODE_COL 14
+#define MODE_BUY_COL 7
+#define MODE_SEP_COL (MODE_BUY_COL + 4)
+#define MODE_SELL_COL (MODE_SEP_COL + 2)
+#define UPGRADE_COL 8
+#define UPGRADE_DESC_COL 8
+#define LEFT_ARROW_COL 3
+#define RIGHT_ARROW_COL 18
 
 
 // Small functional macros for convenience
@@ -81,7 +91,7 @@ typedef struct {
     mode_t mode;
     uint16_t cursor_num, grandma_num;
     uint16_t cursor_lvl, grandma_lvl;
-    BigNum cursor_cost, grandma_cost;
+    BigNum cursor_bld_cost, grandma_bld_cost;
     BigNum cursor_expense, grandma_expense;
     BigNum cursor_upg_cost, grandma_upg_cost;
     BigNum cursor_upg_expense, grandma_upg_expense;
@@ -94,7 +104,7 @@ void normalize_v(BigNum *x);
 BigNum normalize_r(BigNum x);
 
 // Arithmetic functions
-void addsub_v(BigNum* a, const BigNum* b, bool add_or_sub);     // 0 = add, 1 = sub
+void addsub_v(BigNum* a, BigNum b, bool add_or_sub);     // 0 = add, 1 = sub
 BigNum addsub_r(BigNum a, BigNum b, bool add_or_sub);
 void mul_v(BigNum* a, const BigNum* b);
 BigNum mul_r(BigNum a, BigNum b);

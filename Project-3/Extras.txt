@@ -29,9 +29,9 @@ switch (hal_p->JS.TappedY) {
 
 switch (hal_p->JS.TappedY) {
     case UP:
-        build_opn = CircularDecrement(build_opn, NUM_OPTIONS);
+        bld_opn = CircularDecrement(bld_opn, NUM_OPTIONS);
         break;
     case DOWN:
-        build_opn = CircularIncrement(build_opn, NUM_OPTIONS);
+        bld_opn = CircularIncrement(bld_opn, NUM_OPTIONS);
         break;
 }

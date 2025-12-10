@@ -1,15 +1,20 @@
 #include "Display.h"
 
 void normalize_v(BigNum *x) {
-    if (x->base >= BN_BASE_MAX) {
-        x->base /= BN_BASE_FACTOR;
-        x->mag++;
-    }
-    else if (x->base < BN_BASE_MIN && x->base > 0) {
-        x->base *= BN_BASE_FACTOR;
-        x->mag--;
-    }
-    else x->mag = 0;
+    while (x->base >= BN_BASE_MAX || x->base < BN_BASE_MIN)
+        if (x->base >= BN_BASE_MAX) {
+            x->base /= BN_BASE_FACTOR;
+            x->mag++;
+        }
+        else if (x->base < BN_BASE_MIN && x->base > 0) {
+            x->base *= BN_BASE_FACTOR;
+            x->mag--;
+        }
+        else {
+            x->base = 0.0;
+            x->mag = 0;
+            break;
+        }
 }
 
 BigNum normalize_r(BigNum x) {
@@ -17,30 +22,29 @@ BigNum normalize_r(BigNum x) {
     return x;
 }
 
-void addsub_v(BigNum* a, const BigNum* b, bool add_or_sub) {
-    BigNum temp = *b;
-    if (temp.mag < a->mag) {
+void addsub_v(BigNum* a, BigNum b, bool add_or_sub) {
+    if (b.mag < a->mag) {
         // scale b upward
-        while (temp.mag < a->mag) {
-            temp.base /= BN_BASE_FACTOR;
-            temp.mag++;
-            if (temp.base < BN_BASE_MIN) break;
+        while (b.mag < a->mag) {
+            b.base /= BN_BASE_FACTOR;
+            b.mag++;
+            // if (b.base < BN_BASE_MIN) break;
         }
-    } else if (!add_or_sub && temp.mag > a->mag) {
+    } else if (!add_or_sub && b.mag > a->mag) {
         // scale a upward
-        while (a->mag < temp.mag) {
+        while (a->mag < b.mag) {
             a->base /= BN_BASE_FACTOR;
             a->mag++;
-            if (a->base < BN_BASE_MIN) break;
+            // if (a->base < BN_BASE_MIN) break;
         }
     }
 
-    a->base += (add_or_sub ? -temp.base : temp.base);
+    a->base += (add_or_sub ? -b.base : b.base);
     normalize_v(a);
 }
 
 BigNum addsub_r(BigNum a, BigNum b, bool add_or_sub) {
-    addsub_v(&a, &b, add_or_sub);
+    addsub_v(&a, b, add_or_sub);
     return a;
 }
 
@@ -86,8 +90,7 @@ void Format_BigNum(const BigNum* x, char* out, size_t maxlen) {
 }
 
 BigNum GetCPS(const game_state_t* gs_p) {
-    BigNum total_cursor_cps = gs_p->cursor_cpi;
-    BigNum total_grandma_cps = gs_p->grandma_cpi;
+    BigNum total_cursor_cps = gs_p->cursor_cpi, total_grandma_cps = gs_p->grandma_cpi;
 
     total_cursor_cps.base *= gs_p->cursor_num;
     total_grandma_cps.base *= gs_p->grandma_num;
@@ -99,30 +102,38 @@ BigNum GetCPS(const game_state_t* gs_p) {
 void PrintCookies(HAL* hal_p, game_state_t* gs_p) {
     char BNbuffer[TEXT_BUFFER_LENGTH];
     Format_BigNum(&gs_p->cookies, BNbuffer, TEXT_BUFFER_LENGTH);
-    GFX_print(&hal_p->gfx, BNbuffer, COOKIES_TEXT_ROW, COOKIES_COL);
+    GFX_print(&hal_p->gfx, BNbuffer, COOKIES_ROW, COOKIES_COL);
 }
 
 void PrintCPS(HAL* hal_p, game_state_t* gs_p) {
     char BNbuffer[TEXT_BUFFER_LENGTH];
     gs_p->cps = GetCPS(gs_p);
     Format_BigNum(&gs_p->cps, BNbuffer, TEXT_BUFFER_LENGTH);
-    GFX_print(&hal_p->gfx, BNbuffer, COOKIES_TEXT_ROW, CPS_STATS_COL);
+    GFX_print(&hal_p->gfx, BNbuffer, COOKIES_ROW, CPS_STATS_COL);
+}
+
+void PrintMode(HAL* hal_p, game_state_t* gs_p) {
+    static const char* Mode[] = {"Buy ", "Sell"};
+    GFX_print(&hal_p->gfx, Mode[gs_p->mode], MODE_ROW, gs_p->mode == BUY ? MODE_BUY_COL : MODE_SELL_COL);
+    GFX_setForeground(&hal_p->gfx, TEXT_DARK_COLOR);
+    GFX_print(&hal_p->gfx, Mode[1 - gs_p->mode], MODE_ROW, gs_p->mode == BUY ? MODE_SELL_COL : MODE_BUY_COL);
+    GFX_setForeground(&hal_p->gfx, TEXT_LIT_COLOR);
 }
 
 void PrintCursor(HAL* hal_p, game_state_t* gs_p) {
     char BNbuffer[TEXT_BUFFER_LENGTH];
     snprintf(BNbuffer, TEXT_BUFFER_LENGTH, "%d", gs_p->cursor_num);
-    GFX_print(&hal_p->gfx, BNbuffer, CURSOR_TEXT_ROW, STATS_COL);
-    Format_BigNum(&gs_p->cursor_cost, BNbuffer, TEXT_BUFFER_LENGTH);
-    GFX_print(&hal_p->gfx, BNbuffer, CURSOR_TEXT_ROW + 1, STATS_COL);
+    GFX_print(&hal_p->gfx, BNbuffer, CURSOR_ROW, STATS_COL);
+    Format_BigNum(&gs_p->cursor_bld_cost, BNbuffer, TEXT_BUFFER_LENGTH);
+    GFX_print(&hal_p->gfx, BNbuffer, CURSOR_ROW + 1, STATS_COL);
 }
 
 void PrintGrandma(HAL* hal_p, game_state_t* gs_p) {
     char BNbuffer[TEXT_BUFFER_LENGTH];
     snprintf(BNbuffer, TEXT_BUFFER_LENGTH, "%d", gs_p->grandma_num);
-    GFX_print(&hal_p->gfx, BNbuffer, GRANDMA_TEXT_ROW, STATS_COL);
-    Format_BigNum(&gs_p->grandma_cost, BNbuffer, TEXT_BUFFER_LENGTH);
-    GFX_print(&hal_p->gfx, BNbuffer, GRANDMA_TEXT_ROW + 1, STATS_COL);
+    GFX_print(&hal_p->gfx, BNbuffer, GRANDMA_ROW, STATS_COL);
+    Format_BigNum(&gs_p->grandma_bld_cost, BNbuffer, TEXT_BUFFER_LENGTH);
+    GFX_print(&hal_p->gfx, BNbuffer, GRANDMA_ROW + 1, STATS_COL);
 }
 
 uint32_t CircularIncrement(uint32_t value, uint32_t maximum) {
@@ -142,10 +153,10 @@ void TitleScreen(HAL* hal_p, display_t* disp_p) {
         GFX_clear(&hal_p->gfx);
         
         // Print Game name
-        GFX_print(&hal_p->gfx, "Cookie Clicker", 1, 4);
+        GFX_print(&hal_p->gfx, "Cookie Clicker", 2, 4);
 
         // Print Dev's name
-        GFX_print(&hal_p->gfx, "Samin Rahman", 3, 4);
+        GFX_print(&hal_p->gfx, "Samin Rahman", 4, 4);
 
         // Construct and start the timer
         TitleTimer = SWTimer_construct(TITLE_DURATION_MS);
@@ -255,37 +266,47 @@ void InstructionsScreen(HAL* hal_p, display_t* disp_p) {
 
 
 void GameScreen(HAL* hal_p, display_t* disp_p, game_state_t* gs_p) {
-    static const char* Mode[] = {"Buy ", "Sell"};
-
-    static option_t build_opn = OPTION_ONE;
-    static uint16_t *Current_num_p;
-    static BigNum *Current_cost_p, *Current_expense_p, *Current_upg_cost_p, *Current_upg_expense_p, *Current_cpi_p;
+    static const char* Buildings[] = {"Cursor ", "Grandma"};
+    static const char* HArrows[] = {"<", ">"};
+    static note_t cursor_note, grandma_note;
+    
+    static option_t bld_opn = OPTION_ONE, upg_opn = OPTION_ONE;
+    static uint16_t *bld_num_p, *upg_num_p, *lvl_p;
+    static BigNum *bld_cost_p, *bld_expense_p, *upg_cost_p, *upg_expense_p, *cpi_p;
     static SWTimer cursor_timer, grandma_timer, buzzer_timer;
 
-    static bool Build_isviable = false, Build_wasviable = false;
-    bool cookies_changed = false, cps_changed = false, mode_changed = false, varrow_changed = false, cursor_changed = false, grandma_changed = false;
+    static bool bld_isviable = false, bld_wasviable = false, upg_isviable = false, upg_wasviable = false;
+    static bool cursor_lvl_fch = true, grandma_lvl_fch = true;      // Used to track first change (increment) of levels
+    bool cookies_changed = false, cpi_changed = false, cps_changed = false, mode_changed = false, varrow_changed = false, harrow_changed = false, cursor_changed = false, grandma_changed = false, upgradability_change = false;
 
     if (disp_p->screen_changed) {   // Only do these when first entering main screen (function)
         // Clear the display
         GFX_clear(&hal_p->gfx);
 
-        gs_p->cookies = gs_p->grandma_expense = gs_p->cursor_expense = gs_p->grandma_upg_expense = gs_p->cursor_upg_expense = gs_p->grandma_cpi = gs_p->cursor_cpi = gs_p->cps = (BigNum) {0.0, 0};
+        // Initialisation
+        gs_p->cookies = gs_p->grandma_expense = gs_p->cursor_expense = gs_p->grandma_upg_expense = gs_p->cursor_upg_expense = gs_p->cps = (BigNum) {0.0, 0};
         gs_p->cursor_num = gs_p->grandma_num = gs_p->cursor_lvl = gs_p->grandma_lvl = 0;
-        gs_p->cursor_cost = (BigNum) {CURSOR_STARTING_PRICE, 0}; gs_p->grandma_cost = (BigNum) {GRANDMA_STARTING_PRICE, 0};
+        gs_p->cursor_cpi = (BigNum) {CURSOR_STARTING_CPI, 0}; gs_p->grandma_cpi = (BigNum) {GRANDMA_STARTING_CPI, 0};
+        gs_p->cursor_bld_cost = (BigNum) {CURSOR_STARTING_PRICE, 0}; gs_p->grandma_bld_cost = (BigNum) {GRANDMA_STARTING_PRICE, 0};
         gs_p->cursor_upg_cost = (BigNum) {CURSOR_UPG_STARTING_PRICE, 0}; gs_p->grandma_upg_cost = (BigNum) {GRANDMA_UPG_STARTING_PRICE, 0};
         gs_p->mode = BUY;
 
-        cookies_changed = cps_changed = mode_changed = varrow_changed = cursor_changed = grandma_changed = true;
+        cookies_changed = cpi_changed = cps_changed = mode_changed = varrow_changed = harrow_changed = cursor_changed = grandma_changed = upgradability_change = true;
 
-        GFX_print(&hal_p->gfx, "Cookies",   COOKIES_TEXT_ROW, TEXT_MIN_COL);
-        GFX_print(&hal_p->gfx, "CPS",       COOKIES_TEXT_ROW, CPS_TEXT_COL);
-        GFX_print(&hal_p->gfx, "BUILDINGS", MODE_TEXT_ROW, TEXT_MIN_COL);
-        // GFX_print(&hal_p->gfx, "|",         MODE_TEXT_ROW, MODE_SEP_COL);
-        GFX_print(&hal_p->gfx, "  Cursor",  CURSOR_TEXT_ROW, TEXT_MIN_COL);
-        GFX_print(&hal_p->gfx, "  Cost",    CURSOR_TEXT_ROW + 1, TEXT_MIN_COL);
-        GFX_print(&hal_p->gfx, "  Grandma", GRANDMA_TEXT_ROW, TEXT_MIN_COL);
-        GFX_print(&hal_p->gfx, "  Cost",    GRANDMA_TEXT_ROW + 1, TEXT_MIN_COL);
+        // Fixed texts
+        GFX_print(&hal_p->gfx, "Cookies",   COOKIES_ROW, TEXT_MIN_COL);
+        GFX_print(&hal_p->gfx, "CPS",       COOKIES_ROW, CPS_TEXT_COL);
+        GFX_print(&hal_p->gfx, "|",         MODE_ROW, MODE_SEP_COL);
+        GFX_print(&hal_p->gfx, "BUILDINGS", BUILDINGS_DESC_ROW, TEXT_MIN_COL);
+        GFX_print(&hal_p->gfx, "Cost",    CURSOR_ROW + 1, INDENT_COL);
+        GFX_print(&hal_p->gfx, "Cost",    GRANDMA_ROW + 1, INDENT_COL);
+        GFX_print(&hal_p->gfx, "UPGRADES",  UPGRADES_DESC_ROW, TEXT_MIN_COL);
 
+        // Construct upgrade music notes
+        cursor_note = Note_Construct(CURSOR_NOTE, BUZZER_DURATION_MS, BUZZER_DUTY_CYCLE_FRACTION);
+        grandma_note = Note_Construct(GRANDMA_NOTE, BUZZER_DURATION_MS, BUZZER_DUTY_CYCLE_FRACTION);
+
+        // Construct and start the CPI timers
         cursor_timer = SWTimer_construct(CURSOR_INTERVAL_MS);
         grandma_timer = SWTimer_construct(GRANDMA_INTERVAL_MS);
         SWTimer_start(&cursor_timer);
@@ -296,7 +317,7 @@ void GameScreen(HAL* hal_p, display_t* disp_p, game_state_t* gs_p) {
         disp_p->redraw = true;
     }
 
-    // JSB tapped = +1 Cookie
+    // JSB tapped: +1 Cookie
     if (hal_p->buttons.JSBtapped) {
         gs_p->cookies.base++;
         normalize_v(&gs_p->cookies);
@@ -306,7 +327,7 @@ void GameScreen(HAL* hal_p, display_t* disp_p, game_state_t* gs_p) {
     // Add Cursor CPI every 1s
     if (SWTimer_expired(&cursor_timer)) {
         if (gs_p->cursor_num > 0) {
-            addsub_v(&gs_p->cookies, &gs_p->cursor_cpi, false);
+            addsub_v(&gs_p->cookies, gs_p->cursor_cpi, false);
             cookies_changed = true;
         }
         SWTimer_start(&cursor_timer);
@@ -315,7 +336,7 @@ void GameScreen(HAL* hal_p, display_t* disp_p, game_state_t* gs_p) {
     // Add Grandma CPI every 5s
     if (SWTimer_expired(&grandma_timer)) {
         if (gs_p->grandma_num > 0) {
-            addsub_v(&gs_p->cookies, &gs_p->grandma_cpi, false);
+            addsub_v(&gs_p->cookies, gs_p->grandma_cpi, false);
             cookies_changed = true;
         }
         SWTimer_start(&grandma_timer);
@@ -325,69 +346,156 @@ void GameScreen(HAL* hal_p, display_t* disp_p, game_state_t* gs_p) {
     if (hal_p->buttons.LB1tapped || hal_p->buttons.LB2tapped) {
         gs_p->mode = 1 - gs_p->mode;
         mode_changed = true;
-
-        // If post = yes, cursor_changed and grandma_changed will be set to true here!
     }
 
-    // Move cursor/arrow
+    // Move vertical cursor/arrow
     if (hal_p->JS.TappedY != CENTERY) {
-        build_opn = hal_p->JS.TappedY == UP ? CircularDecrement(build_opn, NUM_OPTIONS) : CircularIncrement(build_opn, NUM_OPTIONS);
+        bld_opn = hal_p->JS.TappedY == UP ? CircularDecrement(bld_opn, NUM_OPTIONS) : CircularIncrement(bld_opn, NUM_OPTIONS);
         varrow_changed = true;
     }
 
     // Change pointers to current building specs
-    if (varrow_changed) {       // Building selection changed if this this true (at this point)
-        if (build_opn == OPTION_ONE) {
-            Current_num_p = &gs_p->cursor_num; Current_cost_p = &gs_p->cursor_cost; Current_expense_p = &gs_p->cursor_expense; Current_cpi_p = &gs_p->cursor_cpi;
+    if (varrow_changed) {       // Building selection changed if this is true (at this point)
+        if (bld_opn == OPTION_ONE) {
+            bld_num_p = &gs_p->cursor_num; bld_cost_p = &gs_p->cursor_bld_cost; bld_expense_p = &gs_p->cursor_expense;
         }
         else {
-            Current_num_p = &gs_p->grandma_num; Current_cost_p = &gs_p->grandma_cost; Current_expense_p = &gs_p->grandma_expense; Current_cpi_p = &gs_p->grandma_cpi;
+            bld_num_p = &gs_p->grandma_num; bld_cost_p = &gs_p->grandma_bld_cost; bld_expense_p = &gs_p->grandma_expense;
+        }
+
+        // Also print building names (selected - lit)
+        GFX_print(&hal_p->gfx, Buildings[bld_opn], bld_opn == OPTION_ONE ? CURSOR_ROW : GRANDMA_ROW, INDENT_COL);
+        GFX_setForeground(&hal_p->gfx, TEXT_DARK_COLOR);
+        GFX_print(&hal_p->gfx, Buildings[1 - bld_opn], bld_opn == OPTION_ONE ? GRANDMA_ROW : CURSOR_ROW, INDENT_COL);
+        GFX_setForeground(&hal_p->gfx, TEXT_LIT_COLOR);
+    }
+
+    // Changw horizontal option
+    if (hal_p->JS.TappedX != CENTERX) {
+        upg_opn = hal_p->JS.TappedX == LEFT ? CircularDecrement(upg_opn, NUM_OPTIONS) : CircularIncrement(upg_opn, NUM_OPTIONS);
+        harrow_changed = true;
+    }
+
+    // Change pointers to current Upgrade specs
+    if (harrow_changed) {       // Upgrade selection changed if this is true (at this point)
+        if (upg_opn == OPTION_ONE) {
+            lvl_p = &gs_p->cursor_lvl; upg_num_p = &gs_p->cursor_num; upg_cost_p = &gs_p->cursor_upg_cost; upg_expense_p = &gs_p->cursor_upg_expense; cpi_p = &gs_p->cursor_cpi;
+        }
+        else {
+            lvl_p = &gs_p->grandma_lvl; upg_num_p = &gs_p->grandma_num; upg_cost_p = &gs_p->grandma_upg_cost; upg_expense_p = &gs_p->grandma_upg_expense; cpi_p = &gs_p->grandma_cpi;
         }
     }
 
     
     // Buy/Sell Building
-    if (hal_p->buttons.BB1tapped && Build_isviable) {
+    if (hal_p->buttons.BB1tapped && bld_isviable) {
         if (gs_p->mode == BUY) {
-            addsub_v(&gs_p->cookies, &Current_cost_p, true);        // Subtract the building cost from cookies
-            (*Current_num_p)++;                                     // Add a building
-            muldiv_v(Current_cost_p, build_opn == OPTION_ONE ? CURSOR_PRICE_MULT : GRANDMA_PRICE_MULT, false);      // Scale up both the (next) buy and sell prices
-            muldiv_v(Current_expense_p, build_opn == OPTION_ONE ? CURSOR_PRICE_MULT : GRANDMA_PRICE_MULT, false);
+            addsub_v(&gs_p->cookies, *bld_cost_p, true);                                                        // Subtract the building cost from cookies
+            (*bld_num_p)++;                                                                                     // Add a building
+            *bld_expense_p = *bld_cost_p;                                                                   // Expense = Current cost
+            muldiv_v(bld_cost_p, bld_opn == OPTION_ONE ? CURSOR_PRICE_MULT : GRANDMA_PRICE_MULT, false);      // Scale up both the (next) cost
         }
         else {
-            addsub_v(&gs_p->cookies, &Current_expense_p, false);        // Add the building expense to cookies
-            (*Current_num_p)--;                                         // Subtract a building
-            muldiv_v(Current_cost_p, build_opn == OPTION_ONE ? CURSOR_PRICE_MULT : GRANDMA_PRICE_MULT, true);      // Scale down both the (next) buy and sell prices
-            muldiv_v(Current_expense_p, build_opn == OPTION_ONE ? CURSOR_PRICE_MULT : GRANDMA_PRICE_MULT, true);
+            addsub_v(&gs_p->cookies, *bld_expense_p, false);                                                    // Add the building expense to cookies
+            (*bld_num_p)--;                                                                                     // Subtract a building
+            *bld_cost_p = *bld_expense_p;                                                                   // Cost = Current expense
+            *bld_expense_p = *bld_num_p > 0 ? muldiv_r(*bld_expense_p, bld_opn == OPTION_ONE ? CURSOR_PRICE_MULT : GRANDMA_PRICE_MULT, true) : (BigNum) {0.0, 0};     // Scale down expense
         }
         
         // NOTE: CPI is per building unit, so is unchanged by building number
 
         cookies_changed = true;
         cps_changed = true;
-        cursor_changed = (build_opn == OPTION_ONE);
-        grandma_changed = (build_opn == OPTION_TWO);
+        cursor_changed = (bld_opn == OPTION_ONE);
+        grandma_changed = (bld_opn == OPTION_TWO);
+    }
+
+    // Buy/Sell Upgrade
+    if (hal_p->buttons.BB2tapped && upg_isviable) {
+        if (gs_p->mode == BUY) {
+            addsub_v(&gs_p->cookies, *upg_cost_p, true);                                                        // Subtract the upgrade cost from cookies
+            (*lvl_p)++;                                                                                         // Add a level
+            *upg_expense_p = *upg_cost_p;                                                                       // Expense = Current cost
+            muldiv_v(upg_cost_p, upg_opn == OPTION_ONE ? CURSOR_UPG_PRICE_MULT : GRANDMA_UPG_PRICE_MULT, false);      // Scale up both the (next) cost
+            muldiv_v(cpi_p, upg_opn == OPTION_ONE ? CURSOR_UPG_CPI_MULT : GRANDMA_UPG_CPI_MULT, false);         // Scale up the CPI
+
+            if (upg_opn == OPTION_ONE) cursor_lvl_fch = true;
+            else grandma_lvl_fch = true;
+        }
+        else {
+            addsub_v(&gs_p->cookies, *upg_expense_p, false);                                                    // Add the building expense to cookies
+            (*lvl_p)--;                                                                                     // Subtract a building
+            *upg_cost_p = *upg_expense_p;                                                                   // Cost = Current expense
+            *upg_expense_p = *lvl_p > 0 ? muldiv_r(*upg_expense_p, upg_opn == OPTION_ONE ? CURSOR_UPG_PRICE_MULT : GRANDMA_UPG_PRICE_MULT, true) : (BigNum) {0.0, 0};     // Scale down expense
+            muldiv_v(cpi_p, upg_opn == OPTION_ONE ? CURSOR_UPG_CPI_MULT : GRANDMA_UPG_CPI_MULT, true);         // Scale down the CPI
+        }
+        
+        cpi_changed = true;
+        cookies_changed = true;
+        cps_changed = true;
     }
 
     // Check if Building B/S viable
-    if (cookies_changed || mode_changed) {
-        Build_isviable = (gs_p->mode == BUY && GE_BigNum(&gs_p->cookies, Current_cost_p)) || (gs_p->mode == SELL && *Current_num_p > 0);
-        if (Build_isviable != Build_wasviable) varrow_changed = true;
-        Build_wasviable = Build_isviable;
+    if (cookies_changed || mode_changed || varrow_changed) {
+        bld_isviable = (gs_p->mode == BUY && GE_BigNum(&gs_p->cookies, bld_cost_p)) || (gs_p->mode == SELL && *bld_num_p > 0);
+        if (bld_isviable != bld_wasviable) varrow_changed = true;
+        bld_wasviable = bld_isviable;
+    }
+
+    // Check if Upgrade B/S viable
+    if (cookies_changed || mode_changed || harrow_changed) {
+        upg_isviable = (gs_p->mode == BUY && *upg_num_p > 0 && GE_BigNum(&gs_p->cookies, upg_cost_p)) || (gs_p->mode == SELL && *lvl_p > 0);
+        if (upg_isviable != upg_wasviable) upgradability_change = true;
+        upg_wasviable = upg_isviable;
+    }
+
+    // Play Upgrade availability music
+    if (cursor_lvl_fch && GE_BigNum(&gs_p->cookies, &gs_p->cursor_upg_cost)) {
+        cursor_lvl_fch = false;
+        Buzzer_Play(&cursor_note);
+    }
+    if (grandma_lvl_fch && GE_BigNum(&gs_p->cookies, &gs_p->grandma_upg_cost)) {
+        grandma_lvl_fch = false;
+        Buzzer_Play(&grandma_note);
     }
     
+    // Print Upgrade description text
+    if (upgradability_change || harrow_changed) {
+        char upg_desc[TEXT_BUFFER_LENGTH];
+        snprintf(upg_desc, TEXT_BUFFER_LENGTH, "%s lvl %d>%d", Buildings[upg_opn], *lvl_p, *lvl_p + (gs_p->mode == BUY ? 1 : -1));
+
+        if (!upg_isviable) GFX_setForeground(&hal_p->gfx, TEXT_DARK_COLOR);
+        GFX_print(&hal_p->gfx, upg_desc, UPGRADES_DESC_ROW, UPGRADE_DESC_COL);
+        if (!upg_isviable) GFX_setForeground(&hal_p->gfx, TEXT_LIT_COLOR);
+    }
+
     // Print Vertical (Bulding selector) arrow
     if (varrow_changed) {
-        if (!Build_isviable) GFX_setForeground(&hal_p->gfx, TEXT_DARK_COLOR);
-        GFX_print(&hal_p->gfx, ">",  build_opn == OPTION_ONE ? CURSOR_TEXT_ROW : GRANDMA_TEXT_ROW, STATS_COL);
-        GFX_print(&hal_p->gfx, "  ", build_opn == OPTION_TWO ? CURSOR_TEXT_ROW : GRANDMA_TEXT_ROW, STATS_COL);
-        if (!Build_isviable) GFX_setForeground(&hal_p->gfx, TEXT_LIT_COLOR);
+        if (!bld_isviable) GFX_setForeground(&hal_p->gfx, TEXT_DARK_COLOR);
+        GFX_print(&hal_p->gfx, "> ",  bld_opn == OPTION_ONE ? CURSOR_ROW : GRANDMA_ROW, INDENT_COL);
+        GFX_print(&hal_p->gfx, "  ", bld_opn == OPTION_TWO ? CURSOR_ROW : GRANDMA_ROW, INDENT_COL);
+        if (!bld_isviable) GFX_setForeground(&hal_p->gfx, TEXT_LIT_COLOR);
+    }
+
+    // Print Horizontal (Upgrade selector) arrows
+    if (harrow_changed) {
+        GFX_setForeground(&hal_p->gfx, TEXT_DARK_COLOR);
+        GFX_print(&hal_p->gfx, HArrows[upg_opn], UPGRADE_ROW, upg_opn == OPTION_ONE ? LEFT_ARROW_COL : RIGHT_ARROW_COL);
+        GFX_setForeground(&hal_p->gfx, TEXT_LIT_COLOR);
+        GFX_print(&hal_p->gfx, HArrows[1 - upg_opn], UPGRADE_ROW, upg_opn == OPTION_ONE ? RIGHT_ARROW_COL : LEFT_ARROW_COL);
+    }
+
+    // Print current upgrade cost
+    if (harrow_changed || cpi_changed) {
+        char upg_cost_str[TEXT_BUFFER_LENGTH];
+        Format_BigNum(upg_cost_p, upg_cost_str, TEXT_BUFFER_LENGTH);
+        GFX_print(&hal_p->gfx, upg_cost_str, UPGRADE_ROW, UPGRADE_COL);
     }
 
     // Print the other stats
     if (cookies_changed) PrintCookies(hal_p, gs_p);
     
-    if (mode_changed) GFX_print(&hal_p->gfx, Mode[gs_p->mode], MODE_TEXT_ROW, MODE_COL);
+    if (mode_changed) PrintMode(hal_p, gs_p);
     
     if (cps_changed) PrintCPS(hal_p, gs_p);
 
@@ -396,3 +504,5 @@ void GameScreen(HAL* hal_p, display_t* disp_p, game_state_t* gs_p) {
     if (grandma_changed) PrintGrandma(hal_p, gs_p);
 
 }
+
+// void dummyend();

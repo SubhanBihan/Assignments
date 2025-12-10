@@ -20,7 +20,11 @@
 #define BUZZER_TIMER                TIMER_A0_BASE
 #define BUZZER_CHANNEL              TIMER_A_CAPTURECOMPARE_REGISTER_4
 
-// #define BUZZER_DUTY_CYCLE_FRACTION 0.5
+#define BUZZER_DURATION_MS 100
+#define BUZZER_DUTY_CYCLE_FRACTION 0.5
+
+#define CURSOR_NOTE  NOTE_A5
+#define GRANDMA_NOTE NOTE_D6
 
 // TODO: Set the following values to the correct values for the pwm
 #define PWM_CLKSOURCE               TIMER_A_CLOCKSOURCE_SMCLK

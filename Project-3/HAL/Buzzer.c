@@ -73,6 +73,9 @@ void Buzzer_Play(note_t* note)
 
     // Generate PWM
     Timer_A_generatePWM(BUZZER_TIMER, &pwmConfig);
+
+    // Start Timer32_1 (one-shot)
+    StartHWTimer1(note->duration_ms);   // Buzzer will be stopped by ISR of this timer
 }
 
 void Buzzer_Stop()
