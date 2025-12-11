@@ -10,18 +10,18 @@
 #define TITLE_DURATION_MS 2000
 
 // Game aspects
-#define CURSOR_STARTING_PRICE 2
-#define GRANDMA_STARTING_PRICE 2
-#define CURSOR_PRICE_MULT 2
-#define GRANDMA_PRICE_MULT 5
-#define CURSOR_STARTING_CPI 2
-#define GRANDMA_STARTING_CPI 10
-#define CURSOR_UPG_STARTING_PRICE 1
-#define GRANDMA_UPG_STARTING_PRICE 2
-#define CURSOR_UPG_PRICE_MULT 5
-#define GRANDMA_UPG_PRICE_MULT 10
-#define CURSOR_UPG_CPI_MULT 2
-#define GRANDMA_UPG_CPI_MULT 5
+#define CURSOR_STARTING_PRICE 2.0
+#define GRANDMA_STARTING_PRICE 2.0
+#define CURSOR_PRICE_MULT 2.0
+#define GRANDMA_PRICE_MULT 5.0
+#define CURSOR_STARTING_CPI 2.0
+#define GRANDMA_STARTING_CPI 10.0
+#define CURSOR_UPG_STARTING_PRICE 1.0
+#define GRANDMA_UPG_STARTING_PRICE 2.0
+#define CURSOR_UPG_PRICE_MULT 5.0
+#define GRANDMA_UPG_PRICE_MULT 10.0
+#define CURSOR_UPG_CPI_MULT 2.0
+#define GRANDMA_UPG_CPI_MULT 5.0
 #define CURSOR_INTERVAL_MS 1000
 #define GRANDMA_INTERVAL_MS 5000
 
@@ -37,22 +37,24 @@
 #define TEXT_BUFFER_LENGTH 25
 #define TEXT_MIN_COL 1
 #define COOKIES_ROW 1
+#define CPS_ROW MODE_ROW
 #define MODE_ROW 2
 #define BUILDINGS_DESC_ROW 3
 #define CURSOR_ROW 4
 #define GRANDMA_ROW (CURSOR_ROW + 3)
-#define UPGRADES_DESC_ROW (GRANDMA_ROW + 3)
-#define UPGRADE_ROW (UPGRADES_DESC_ROW + 1)
+#define UPGRADES_HEADER_ROW (GRANDMA_ROW + 3)
+#define UPGRADES_DESC_ROW (UPGRADE_ROW + 1)
+#define UPGRADE_ROW (UPGRADES_HEADER_ROW + 1)
 #define STATS_COL 12
 #define INDENT_COL 3
 #define COOKIES_COL 9
-#define CPS_TEXT_COL 13
-#define CPS_STATS_COL 17
-#define MODE_BUY_COL 7
-#define MODE_SEP_COL (MODE_BUY_COL + 4)
-#define MODE_SELL_COL (MODE_SEP_COL + 2)
+#define CPS_TEXT_COL (MODE_SELL_COL + 5)
+#define CPS_STATS_COL (CPS_TEXT_COL + 4)
+#define MODE_BUY_COL TEXT_MIN_COL
+#define MODE_SEP_COL (MODE_BUY_COL + 3)
+#define MODE_SELL_COL (MODE_SEP_COL + 1)
 #define UPGRADE_COL 8
-#define UPGRADE_DESC_COL 8
+#define UPGRADE_DESC_COL 1
 #define LEFT_ARROW_COL 3
 #define RIGHT_ARROW_COL 18
 
@@ -89,10 +91,10 @@ typedef struct {
 typedef struct {
     BigNum cookies;
     mode_t mode;
-    uint16_t cursor_num, grandma_num;
-    uint16_t cursor_lvl, grandma_lvl;
+    int16_t cursor_num, grandma_num;
+    int16_t cursor_lvl, grandma_lvl;
     BigNum cursor_bld_cost, grandma_bld_cost;
-    BigNum cursor_expense, grandma_expense;
+    BigNum cursor_bld_expense, grandma_bld_expense;
     BigNum cursor_upg_cost, grandma_upg_cost;
     BigNum cursor_upg_expense, grandma_upg_expense;
     BigNum cursor_cpi, grandma_cpi, cps;
@@ -104,12 +106,12 @@ void normalize_v(BigNum *x);
 BigNum normalize_r(BigNum x);
 
 // Arithmetic functions
-void addsub_v(BigNum* a, BigNum b, bool add_or_sub);     // 0 = add, 1 = sub
-BigNum addsub_r(BigNum a, BigNum b, bool add_or_sub);
+void addsub_v(BigNum* a, BigNum b, bool subtract);     // 0 = add, 1 = sub
+BigNum addsub_r(BigNum a, BigNum b, bool subtract);
 void mul_v(BigNum* a, const BigNum* b);
 BigNum mul_r(BigNum a, BigNum b);
-void muldiv_v(BigNum* a, const double b, bool mul_or_div);
-BigNum muldiv_r(BigNum a, const double b, bool mul_or_div);
+void muldiv_v(BigNum* a, const double b, bool divide);
+BigNum muldiv_r(BigNum a, const double b, bool divide);
 
 // Comparison functions
 bool GE_BigNum(const BigNum* a, const BigNum* b);
